@@ -1,0 +1,35 @@
+{
+  "-KAOGRLm_hoQPxM38YbS": {
+    "api": {
+      "method": "POST",
+      "payload": "{ zip: {zip} }",
+      "response": "{ bid: {bid} }",
+      "url": "http://api.leadsbyfone.com/mold?zip={zip}"
+    },
+    "color": "00aced",
+    "name": "LeadsByFone",
+    "phone": "4047357545",
+    "priority": 1
+  },
+  "-KAORjXs6d4nj--JJjUz": {
+    "api": {
+      "method": "GET",
+      "response": "{ bid: {bid} }",
+      "url": "http://api.33mileradius.com/mold?zip={zip}"
+    },
+    "color": "000000",
+    "default": true,
+    "name": "33 Mile Radius",
+    "phone": "4047357545"
+  },
+  "-KAORuqZfQN_nwk5S5Tl": {
+    "api": {
+      "method": "GET",
+      "response": "{bid}",
+      "url": "http://api.restorationeze.com/mold?zip={zip}"
+    },
+    "color": "FF0000",
+    "name": "Restoration Eze",
+    "phone": "4047357545"
+  }
+}

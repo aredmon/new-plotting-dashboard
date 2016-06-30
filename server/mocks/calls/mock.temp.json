@@ -1,0 +1,22 @@
+{
+  "-KAm725IBKPnheKMIXzq": {
+    "clientId": "abc123",
+    "clientName": "Joel Kanzelmeyer",
+    "duration": 192537,
+    "partnerId": "-KAOGRLm_hoQPxM38YbS",
+    "phone": "4047357545",
+    "recording": "http://twilio.com/call/id/7564123",
+    "start": 1455760644049,
+    "status": "no-answer"
+  },
+  "-KAm8R6uDkhjT3EjmkIr": {
+    "clientId": "def456",
+    "clientName": "Justin Robinson",
+    "duration": 131421,
+    "partnerId": "-KAOGRLm_hoQPxM38YbS",
+    "phone": "6787613542",
+    "recording": "http://twilio.com/call/id/7564124",
+    "start": 1455760972049,
+    "status": "no-answer"
+  }
+}

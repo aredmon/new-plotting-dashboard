@@ -1,0 +1,21 @@
+.trackList {
+  overflow: auto;
+  background-color: #fff;
+}
+
+.list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: calc(100vh - 88px);
+  background-color: #fff;
+}
+
+.plot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: calc(100vh - 88px);
+}

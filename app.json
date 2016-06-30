@@ -1,0 +1,15 @@
+{
+  "name": "mmd-dashboard",
+  "scripts": {
+  },
+  "env": {
+  },
+  "addons": [
+    "deployhooks:http"
+  ],
+  "buildpacks": [
+    {
+      "url": "urn:buildpack:heroku/nodejs"
+    }
+  ]
+}
