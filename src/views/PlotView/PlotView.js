@@ -7,6 +7,7 @@ import classes from './PlotView.scss';
 import ListItem from 'material-ui/lib/lists/list-item';
 // plots
 import Position from 'components/plots/Position';
+import Position3D from 'components/plots/Position3D';
 
 export class PlotView extends React.Component {
   constructor (props) {
@@ -72,8 +73,12 @@ export class PlotView extends React.Component {
 
     // get track data
     const trackData = data.filter((row) => {
-      return row.get('radarId') === selectedIndex;
+      return row.get('radar_id') === selectedIndex;
     });
+
+    const radarData = data.filter((row) => {
+      return row.get('radarId') === selectedIndex;
+    }).first();
 
     // control which plot to display
     switch (params.plotType) {
@@ -94,6 +99,17 @@ export class PlotView extends React.Component {
           height={height}
           />;
 
+        break;
+      case 'position-3d':
+        this.state.showFields = false;
+        this.state.showTrackList = true;
+        this.plot = <Position3D
+          data={trackData}
+          radarData={radarData}
+          title={'Position LLA'}
+          width={width}
+          height={height}
+          />;
         break;
       default:
         break;

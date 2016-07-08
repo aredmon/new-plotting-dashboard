@@ -7,9 +7,11 @@ import { addMetrics } from 'redux/modules/track-ids';
 
 export class SummaryView extends Component {
   constructor (props) {
+    console.debug('SummaryView Constructor 1\n');
     super();
     this.metrics = getMetrics(props.data);
     this.saveMetrics = this.saveMetrics.bind(this);
+    console.debug('SummaryView Constructor 2\n');
   }
 
   static propTypes = {
@@ -27,9 +29,11 @@ export class SummaryView extends Component {
   }
 
   render () {
+    console.debug('SummaryView Render 1\n');
     const { trackIds, airThreats, ramThreats } = this.metrics;
     const labels = ['Air Threats', 'RAM Threats'];
     const values = [airThreats.size, ramThreats.size];
+    console.debug('SummaryView Render 2\n');
     return (
       <div style={{
         display: 'flex',

@@ -17,6 +17,16 @@ const getSummaryMetrics = (data) => {
       if (row.get('type') === 'radarInit') {
         radars = radars.add(row.get('radarId'));
       }
+      // else if (row.get('type') === 'track') {
+      //   if (row.has('isRAM')) {
+      //     if (row.get('isRAM') === 'true') {
+      //       ramThreats = ramThreats.add(row.get('id'));
+      //     } else {
+      //       airThreats = airThreats.add(row.get('id'));
+      //     }
+      //   }
+      // }
+      // console.debug('redmon test 5');
       types = types.add(row.get('type'));
     }
     if (row.has('objType')) {
