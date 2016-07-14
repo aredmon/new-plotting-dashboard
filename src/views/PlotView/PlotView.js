@@ -6,7 +6,7 @@ import classes from './PlotView.scss';
 // material UI
 import ListItem from 'material-ui/lib/lists/list-item';
 // plots
-import Position from 'components/plots/Position';
+import TruthVsTrack from 'components/plots/TruthVsTrack';
 import Position3D from 'components/plots/Position3D';
 
 export class PlotView extends React.Component {
@@ -90,7 +90,7 @@ export class PlotView extends React.Component {
           { name: 'ECEF Y', field: 'sv_ecef_y' },
           { name: 'ECEF Z', field: 'sv_ecef_z' }
         ];
-        this.plot = <Position
+        this.plot = <TruthVsTrack
           data={trackData}
           title={`Radar ${selectedIndex} - ${this.fieldList[selectedField].name} vs Time`}
           fieldX='t_valid'
@@ -100,6 +100,21 @@ export class PlotView extends React.Component {
           />;
 
         break;
+
+      case 'altitude':
+        this.state.showFields = false;
+        this.state.showTrackList = true;
+        this.plot = <TruthVsTrack
+          data={trackData}
+          title={`Radar ${selectedIndex} - Altitude vs Time`}
+          fieldX='t_valid'
+          fieldY='alt'
+          width={width}
+          height={height}
+          />;
+
+        break;
+
       case 'position-3d':
         this.state.showFields = false;
         this.state.showTrackList = true;
