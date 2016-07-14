@@ -131,56 +131,57 @@ class Position3D extends React.Component {
     console.debug(coverageZ);
 
     return [
-      // {
-      //   type: 'scatter3d',
-      //   x: truthX,
-      //   y: truthY,
-      //   z: truthZ,
-      //   mode: 'markers',
-      //   marker: {
-      //     color: Theme.palette.truth,
-      //     size: 6,
-      //     opacity: 0.5,
-      //     symbol: 'dot',
-      //     line: {
-      //       opacity: 0.8,
-      //       width: 1,
-      //       weight: 1,
-      //       color: Theme.palette.truth
-      //     }
-      //   },
-      //   name: 'Truth'
-      // },
-      // {
-      //   type: 'scatter3d',
-      //   x: trackX,
-      //   y: trackY,
-      //   z: trackZ,
-      //   mode: 'markers',
-      //   marker: {
-      //     color: Theme.palette.track,
-      //     size: 4,
-      //     opacity: 0.5,
-      //     symbol: 'dot',
-      //     line: {
-      //       opacity: 0.8,
-      //       width: 1,
-      //       color: Theme.palette.track
-      //     }
-      //   },
-      //   name: 'Track'
-      // },
       {
-        type: 'mesh3d',
-        x: [0, 0, 1, 1, 0, 0, 1, 1],
-        y: [0, 1, 1, 0, 0, 1, 1, 0],
-        z: [0, 0, 0, 0, 1, 1, 1, 1],
-        i: [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
-        j: [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
-        k: [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
-        opacity: 0.4,
-        name: 'Coverage'
+        type: 'scatter3d',
+        x: truthX,
+        y: truthY,
+        z: truthZ,
+        mode: 'markers',
+        marker: {
+          color: Theme.palette.truth,
+          size: 6,
+          opacity: 0.5,
+          symbol: 'dot',
+          line: {
+            opacity: 0.8,
+            width: 1,
+            weight: 1,
+            color: Theme.palette.truth
+          }
+        },
+        name: 'Truth'
+      },
+      {
+        type: 'scatter3d',
+        x: trackX,
+        y: trackY,
+        z: trackZ,
+        mode: 'markers',
+        marker: {
+          color: Theme.palette.track,
+          size: 4,
+          opacity: 0.5,
+          symbol: 'dot',
+          line: {
+            opacity: 0.8,
+            width: 1,
+            color: Theme.palette.track
+          }
+        },
+        name: 'Track'
       }
+      // ,
+      // {
+      //   type: 'mesh3d',
+      //   x: [0, 0, 1, 1, 0, 0, 1, 1],
+      //   y: [0, 1, 1, 0, 0, 1, 1, 0],
+      //   z: [0, 0, 0, 0, 1, 1, 1, 1],
+      //   i: [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+      //   j: [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+      //   k: [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+      //   opacity: 0.4,
+      //   name: 'Coverage'
+      // }
     ];
   }
 
