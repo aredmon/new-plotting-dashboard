@@ -8,6 +8,7 @@ import ListItem from 'material-ui/lib/lists/list-item';
 // plots
 import TruthVsTrack from 'components/plots/TruthVsTrack';
 import Position3D from 'components/plots/Position3D';
+import CesiumPlot from 'components/plots/CesiumPlot';
 
 export class PlotView extends React.Component {
   constructor (props) {
@@ -126,6 +127,19 @@ export class PlotView extends React.Component {
           height={height}
           />;
         break;
+
+      case 'earth':
+        this.state.showFields = false;
+        this.state.showTrackList = false;
+        this.plot = <CesiumPlot
+          data={trackData}
+          radarData={radarData}
+          title={'Position LLA'}
+          width={width}
+          height={height}
+          />;
+        break;
+
       default:
         break;
     }
