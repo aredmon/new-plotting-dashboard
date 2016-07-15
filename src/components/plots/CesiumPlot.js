@@ -1,5 +1,4 @@
 import React, { PropTypes } from 'react';
-// import Cesium from 'cesium';
 
 class CesiumPlot extends React.Component {
 
@@ -20,7 +19,11 @@ class CesiumPlot extends React.Component {
    * @see https://facebook.github.io/react/docs/component-specs.html
    */
   componentDidMount () {
-    // this.viewer = new Cesium.Viewer('cesiumContainer');
+    require('cesium/Build/Cesium/Widgets/widgets.css');
+    var BuildModuleUrl = require('cesium/Source/Core/buildModuleUrl');
+    BuildModuleUrl.setBaseUrl('../');
+    var Viewer = require('cesium/Source/Widgets/Viewer/Viewer');
+    this.viewer = new Viewer('cesiumContainer');
   }
 
   /**

@@ -110,6 +110,7 @@ export class PlotView extends React.Component {
           title={`Radar ${selectedIndex} - Altitude vs Time`}
           fieldX='t_valid'
           fieldY='alt'
+          altSeries1='terrain'
           width={width}
           height={height}
           />;
@@ -135,7 +136,7 @@ export class PlotView extends React.Component {
           data={trackData}
           radarData={radarData}
           title={'Position LLA'}
-          width={width}
+          width={width+180}
           height={height}
           />;
         break;
@@ -143,6 +144,7 @@ export class PlotView extends React.Component {
       default:
         break;
     }
+    const displayTrackList = this.state.showTrackList ? 'flex' : 'none';
     return (
       <div style={{
         display: 'flex',
@@ -151,7 +153,7 @@ export class PlotView extends React.Component {
       }}
       >
         <div style={{
-          display: 'flex',
+          display: displayTrackList,
           flexDirection: 'column',
           width: '120px',
           maxWidth: '120px',
