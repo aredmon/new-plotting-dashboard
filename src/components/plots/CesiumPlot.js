@@ -22,8 +22,14 @@ class CesiumPlot extends React.Component {
     require('cesium/Build/Cesium/Widgets/widgets.css');
     var BuildModuleUrl = require('cesium/Source/Core/buildModuleUrl');
     BuildModuleUrl.setBaseUrl('../');
+
     var Viewer = require('cesium/Source/Widgets/Viewer/Viewer');
     this.viewer = new Viewer('cesiumContainer');
+
+    var BingMapsApi = require('cesium/Source/Core/BingMapsApi');
+    BingMapsApi.defaultKey = 'AhguTre8xUgKVVHSEr1OhOLMeDm-kEUc5-4Jq6VZSHUHEBAal9P_YRs5gNW3BjeV';
+
+    require('cesium/Source/Cesium');
   }
 
   /**
