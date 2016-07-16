@@ -1,14 +1,9 @@
 import React, { PropTypes } from 'react';
-// require('cesium/Build/Cesium/Widgets/widgets.css');
-// var BuildModuleUrl = require('cesium/Source/Core/buildModuleUrl');
 /* eslint-disable no-unused-vars */
+// The two cesium imports are imported only to include the scripts. The
+// varables are not used
 import widgets from 'cesium/Build/Cesium/Widgets/widgets.css';
-import BuildModuleUrl from 'cesium/Source/Core/buildModuleUrl';
-import Viewer from 'cesium/Source/Widgets/Viewer/Viewer';
-import BingMapsApi from 'cesium/Source/Core/BingMapsApi';
-import Cartesian3 from 'cesium/Source/Core/Cartesian3';
-import Cesium from 'cesium/Source/Cesium';
-import Color from 'cesium/Source/Core/Color';
+import c from 'cesium/Build/CesiumUnminified/Cesium.js';
 
 class CesiumPlot extends React.Component {
 
@@ -29,10 +24,10 @@ class CesiumPlot extends React.Component {
    * @see https://facebook.github.io/react/docs/component-specs.html
    */
   componentDidMount () {
-    console.debug('component mounted');
-    BuildModuleUrl.setBaseUrl('../');
-    BingMapsApi.defaultKey = 'AhguTre8xUgKVVHSEr1OhOLMeDm-kEUc5-4Jq6VZSHUHEBAal9P_YRs5gNW3BjeV';
-    this.viewer = new Viewer('cesiumContainer');
+    window.CESIUM_BASE_URL = '../Cesium';
+    const Cesium = window.Cesium;
+    Cesium.BingMapsApi.defaultKey = 'AhguTre8xUgKVVHSEr1OhOLMeDm-kEUc5-4Jq6VZSHUHEBAal9P_YRs5gNW3BjeV';
+    const viewer = new Cesium.Viewer('cesiumContainer');
   }
 
   /**
@@ -53,9 +48,8 @@ class CesiumPlot extends React.Component {
    * @see https://facebook.github.io/react/docs/component-specs.html
    */
   render () {
-    console.debug('rendering');
     return (
-      <div id={'cesiumContainer'} />
+      <div id={'cesiumContainer'} style={{height: '100%'}}/>
     );
   }
 }
