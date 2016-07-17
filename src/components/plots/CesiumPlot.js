@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react';
-/* eslint-disable no-unused-vars */
+import { connect } from 'react-redux';
+/* eslint-disable no-unused-vars, no-undef */
 // The two cesium imports are imported only to include the scripts. The
 // varables are not used
 import widgets from 'cesium/Build/Cesium/Widgets/widgets.css';
@@ -12,6 +13,7 @@ class CesiumPlot extends React.Component {
   static propTypes = {
     data: PropTypes.object,
     radarData: PropTypes.object,
+    trackIds: PropTypes.object,
     title: PropTypes.string,
     width: PropTypes.number,
     height: PropTypes.number
@@ -25,9 +27,10 @@ class CesiumPlot extends React.Component {
    */
   componentDidMount () {
     window.CESIUM_BASE_URL = '../Cesium';
-    const Cesium = window.Cesium;
-    Cesium.BingMapsApi.defaultKey = 'AhguTre8xUgKVVHSEr1OhOLMeDm-kEUc5-4Jq6VZSHUHEBAal9P_YRs5gNW3BjeV';
-    const viewer = new Cesium.Viewer('cesiumContainer');
+    this.Cesium = window.Cesium;
+    this.Cesium.BingMapsApi.defaultKey = 'AhguTre8xUgKVVHSEr1OhOLMeDm-kEUc5-4Jq6VZSHUHEBAal9P_YRs5gNW3BjeV';
+    this.viewer = new this.Cesium.Viewer('cesiumContainer');
+    this.drawThreats();
   }
 
   /**
@@ -38,6 +41,95 @@ class CesiumPlot extends React.Component {
    */
   componentWillReceiveProps (nextProps) {
     this.props = nextProps;
+  }
+
+  drawThreats () {
+    const { data } = this.props;
+
+    let truthMap = {};
+    let trackMap = {};
+    let terrainMap = {};
+    // time this task
+    const begin = Date.now();
+    let count = 0;
+    data.forEach(row => {
+      let key = row.get('id');
+      if (row.get('type') === 'truth') {
+        if (!truthMap[key]) {
+          truthMap[key] = [];
+        }
+        truthMap[key].push(row.get('lat'));
+        truthMap[key].push(row.get('lon'));
+        truthMap[key].push(row.get('alt'));
+      }
+
+      if (row.get('type') === 'track') {
+        if (!trackMap[key]) {
+          trackMap[key] = [];
+        }
+        trackMap[key].push(row.get('lat'));
+        trackMap[key].push(row.get('lon'));
+        trackMap[key].push(row.get('alt'));
+      }
+
+      if (row.get('type') === 'terrain') {
+        if (!terrainMap[key]) {
+          terrainMap[key] = [];
+        }
+        terrainMap[key].push(row.get('lat'));
+        terrainMap[key].push(row.get('lon'));
+        terrainMap[key].push(row.get('alt'));
+      }
+      count++;
+    });
+    const dataProcess = Date.now();
+    let seconds = (dataProcess - begin) / 1000;
+    console.debug(`Processed ${count} rows in ${seconds} seconds.`);
+
+    for (var trackId in truthMap) {
+      this.viewer.entities.add(
+        {
+          name: `Track ${trackId}`,
+          polyline: {
+            positions: this.Cesium.Cartesian3.fromRadiansArrayHeights(truthMap[trackId]),
+            width: 2,
+            material: this.Cesium.Color.BLUE
+          }
+        }
+      );
+    }
+
+    for (var truthId in trackMap) {
+      this.viewer.entities.add(
+        {
+          name: `Track ${truthId}`,
+          polyline: {
+            positions: this.Cesium.Cartesian3.fromRadiansArrayHeights(trackMap[truthId]),
+            width: 2,
+            material: this.Cesium.Color.GREEN
+          }
+        }
+      );
+    }
+
+    for (var terrainId in terrainMap) {
+      this.viewer.entities.add(
+        {
+          name: `Track ${terrainId}`,
+          polyline: {
+            positions: this.Cesium.Cartesian3.fromRadiansArrayHeights(terrainMap[terrainId]),
+            width: 2,
+            material: this.Cesium.Color.RED
+          }
+        }
+      );
+    }
+
+    const dataRender = Date.now();
+    seconds = (dataRender - dataProcess) / 1000;
+    console.debug(`Rendered data in ${seconds} seconds.`);
+
+    this.viewer.zoomTo(this.viewer.entities);
   }
 
   /**
@@ -54,4 +146,8 @@ class CesiumPlot extends React.Component {
   }
 }
 
-export default CesiumPlot;
+const mapStateToProps = (state) => ({
+  trackIds: state.metrics.get('trackIds')
+});
+
+export default connect(mapStateToProps)(CesiumPlot);
