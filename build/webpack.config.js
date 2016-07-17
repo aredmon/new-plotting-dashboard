@@ -7,7 +7,9 @@ import _debug from 'debug';
 
 const debug = _debug('app:webpack:config');
 const paths = config.utils_paths;
+/* eslint-disable no-unused-vars*/
 const {__API_URL__, __DEV__, __PROD__, __TEST__} = config.globals;
+/* eslint-enable no-unused-vars*/
 
 debug('Create configuration.');
 const webpackConfig = {
@@ -38,7 +40,8 @@ webpackConfig.entry = {
 webpackConfig.output = {
   filename: `[name].[${config.compiler_hash_type}].js`,
   path: paths.base(config.dir_dist),
-  publicPath: config.compiler_public_path
+  publicPath: config.compiler_public_path,
+  sourcePrefix: ''
 };
 
 // ------------------------------------
@@ -120,6 +123,8 @@ webpackConfig.module.loaders = [{
   test: /\.json$/,
   loader: 'json'
 }];
+
+// webpackConfig.module.unknownContextCritical = false;
 
 // Styles
 const cssLoader = !config.compiler_css_modules
@@ -203,8 +208,13 @@ webpackConfig.module.loaders.push(
   { test: /\.ttf(\?.*)?$/,   loader: 'url?prefix=fonts/&name=[path][name].[ext]&limit=10000&mimetype=application/octet-stream' },
   { test: /\.eot(\?.*)?$/,   loader: 'file?prefix=fonts/&name=[path][name].[ext]' },
   { test: /\.svg(\?.*)?$/,   loader: 'url?prefix=fonts/&name=[path][name].[ext]&limit=10000&mimetype=image/svg+xml' },
-  { test: /\.(png|jpg)$/,    loader: 'url?limit=8192' }
+  { test: /\.(png|jpg)$/,    loader: 'url?limit=8192' },
+  { test: /Cesium\.js$/, loader: 'script' }
 )
+// { test: /\.(png|jpg)$/,    loader: 'url?limit=8192' },
+// { test: /\.(png|gif|jpg|jpeg)$/, loader: 'file-loader' },
+
+
 /* eslint-enable */
 
 // ------------------------------------

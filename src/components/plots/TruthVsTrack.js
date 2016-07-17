@@ -16,6 +16,7 @@ class TruthVsTrack extends React.Component {
     width: PropTypes.number,
     fieldX: PropTypes.string.isRequired,
     fieldY: PropTypes.string.isRequired,
+    altSeries1: PropTypes.string,
     height: PropTypes.number
   }
 
@@ -61,11 +62,13 @@ class TruthVsTrack extends React.Component {
    */
   createPlotData (data) {
     const begin = Date.now();
-    const { fieldX, fieldY } = this.props;
+    const { fieldX, fieldY, altSeries1 } = this.props;
     let truthX = [];
     let truthY = [];
     let trackX = [];
     let trackY = [];
+    let altSeries1X = [];
+    let altSeries1Y = [];
     let count = 0;
 
     data.forEach((row) => {
@@ -77,6 +80,12 @@ class TruthVsTrack extends React.Component {
         trackX.push(row.get(fieldX));
         trackY.push(row.get(fieldY));
       }
+      if (altSeries1) {
+        if (row.get('type') === altSeries1) {
+          altSeries1X.push(row.get(fieldX));
+          altSeries1Y.push(row.get(fieldY));
+        }
+      }
       count++;
     });
     const end = Date.now();
@@ -84,14 +93,14 @@ class TruthVsTrack extends React.Component {
     console.debug(`Time to create data sets: ${seconds}. Rows processed: ${count}.`);
 
     // `scattergl` plot type loads faster than the `scatter` plot type
-    return [{
+    let result = [{
       type: 'scattergl',
       x: truthX,
       y: truthY,
       mode: 'markers',
       marker: {
         color: Theme.palette.truth,
-        size: 18,
+        size: 3,
         opacity: 0.6,
         symbol: 'dot',
         line: {
@@ -102,24 +111,47 @@ class TruthVsTrack extends React.Component {
       },
       name: 'Truth'
     },
-    {
-      type: 'scattergl',
-      x: trackX,
-      y: trackY,
-      mode: 'markers',
-      marker: {
-        color: Theme.palette.track,
-        size: 10,
-        opacity: 0.5,
-        symbol: 'diamond',
-        line: {
-          opacity: 1.0,
-          width: 1,
-          color: Theme.palette.truth
-        }
-      },
-      name: 'Track'
-    }];
+      {
+        type: 'scattergl',
+        x: trackX,
+        y: trackY,
+        mode: 'markers',
+        marker: {
+          color: Theme.palette.track,
+          size: 10,
+          opacity: 0.5,
+          symbol: 'diamond',
+          line: {
+            opacity: 1.0,
+            width: 1,
+            color: Theme.palette.truth
+          }
+        },
+        name: 'Track'
+      }];
+
+    if (altSeries1Y.length > 0) {
+      result.push({
+        type: 'scattergl',
+        x: altSeries1X,
+        y: altSeries1Y,
+        mode: 'markers',
+        marker: {
+          color: '#ff0000',
+          size: 10,
+          opacity: 0.6,
+          symbol: 'x',
+          line: {
+            opacity: 1.0,
+            width: 1,
+            color: '#ff0000'
+          }
+        },
+        name: altSeries1
+      });
+    }
+
+    return result;
   }
 
   /**
