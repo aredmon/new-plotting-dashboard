@@ -78,7 +78,7 @@ export class PlotView extends React.Component {
     });
 
     const radarData = data.filter((row) => {
-      return row.get('radarId') === selectedIndex;
+      return row.get('type') === 'radarInit';
     }).first();
 
     // control which plot to display
