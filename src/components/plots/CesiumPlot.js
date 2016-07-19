@@ -63,9 +63,16 @@ class CesiumPlot extends React.Component {
   }
 
   drawScene () {
-    this.drawShapes();
+    this.clearScene();
     this.drawThreats();
+    this.drawShapes();
     this.viewer.scene.globe.depthTestAgainstTerrain = true;
+  }
+
+  clearScene () {
+    const { viewer } = this;
+    viewer.scene.primitives.removeAll();
+    viewer.entities.removeAll();
   }
 
   drawShapes () {
@@ -83,12 +90,14 @@ class CesiumPlot extends React.Component {
     } = this.props.radarData.toJS();
     // massage vars as necessary
     if (startAz !== 0) { startAz = 0; }
-    if (endAz > Math.PI/4) { endAz = Math.PI/4; }
+    if (endAz > Math.PI/2) { endAz = Math.PI/2; }
+    const halfAngleX = cesium.Math.toRadians(Math.abs((maxEl-minEl))/2);
+    const halfAngleY = (endAz-startAz)/2;
 
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
-    var cone = cesium.Math.toRadians(0.0);
-    var twist = cesium.Math.toRadians(0.0);
+    var cone = cesium.Math.toRadians(145.0);
+    var twist = -halfAngleX;
     var location = ellipsoid.cartographicToCartesian(
       new cesium.Cartographic(
         radarLon,
@@ -97,7 +106,7 @@ class CesiumPlot extends React.Component {
       ));
 
     const getModelMatrix = () => {
-      var modelMatrix = cesium.Transforms.eastNorthUpToFixedFrame(location);
+      var modelMatrix = cesium.Transforms.northUpEastToFixedFrame(location);
       var orientation = cesium.Matrix3.multiply(
         cesium.Matrix3.multiply(
           cesium.Matrix3.fromRotationZ(clock),
@@ -116,9 +125,9 @@ class CesiumPlot extends React.Component {
 
     const sensorOptions = {
       modelMatrix: getModelMatrix(),
-      radius: radarRange,
-      xHalfAngle: cesium.Math.toRadians(40.0),
-      yHalfAngle: cesium.Math.toRadians(35.0),
+      radius: radarRange*2,
+      xHalfAngle: cesium.Math.toRadians(Math.abs((maxEl-minEl))/2),
+      yHalfAngle: (endAz-startAz)/2,
       lateralSurfaceMaterial: new cesium.Material({
         fabric: {
           type: 'Color',
@@ -131,23 +140,24 @@ class CesiumPlot extends React.Component {
     };
 
     const addRectangularSensor =() => {
-      viewer.scene.primitives.removeAll();
       const recSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(sensorOptions);
       viewer.scene.primitives.add(recSensor);
     };
 
     const addConicSensor =() => {
-      // viewer.scene.primitives.removeAll();
-      const conicSensor = new CesiumSensorVolumes.ConicSensorGraphics({
-        radius: 1000000.0,
-        innerHalfAngle: Cesium.Math.toRadians(5.0),
+      const myConicSensor = new CesiumSensorVolumes.ConicSensorGraphics({
+        radius: 100000000.0,
+        modelMatrix: getModelMatrix(),
+        innerHalfAngle: Cesium.Math.toRadians(25.0),
         outerHalfAngle: Cesium.Math.toRadians(85.0)
       });
-      viewer.scene.primitives.add(conicSensor);
+      var entity = viewer.entities.getOrCreateEntity('conicSensor');
+      entity.addProperty('conicSensor');
+      viewer.entities.add(myConicSensor);
     };
 
     const addSphericalSensor = () => {
-      console.debug(radarLon, radarLat, radarAlt, maxRange);
+      console.debug(radarLon, radarLat, radarAlt, radarRange);
       var redSphere = viewer.entities.add({
         name: 'Red sphere with black outline',
         position: cesium.Cartesian3.fromRadians(
@@ -156,7 +166,7 @@ class CesiumPlot extends React.Component {
           radarAlt
         ),
         ellipsoid: {
-          radii: new cesium.Cartesian3(maxRange, maxRange, maxRange),
+          radii: new cesium.Cartesian3(radarRange, radarRange, radarRange),
           material: cesium.Color.RED.withAlpha(0.5),
           outline: true,
           outlineColor: cesium.Color.BLACK
@@ -179,7 +189,7 @@ class CesiumPlot extends React.Component {
       viewer.scene.primitives.add(customSensor);
     };
 
-    // addRectangularSensor();
+    addRectangularSensor();
     // addSphericalSensor();
     addConicSensor();
     return;
@@ -201,32 +211,34 @@ class CesiumPlot extends React.Component {
       let lon = row.get('lon');
       let alt = row.get('alt');
 
+      // convert to proper coordinate
+      let coordinate = viewer.scene.globe.ellipsoid.cartographicToCartesian(
+        new cesium.Cartographic(
+          lon,
+          lat,
+          alt
+        ));
+
       if (row.get('type') === 'truth') {
         if (!truthMap[key]) {
           truthMap[key] = [];
         }
-        truthMap[key].push(lat);
-        truthMap[key].push(lon);
-        truthMap[key].push(alt);
+        truthMap[key].push(coordinate);
       }
 
       if (row.get('type') === 'track') {
         if (!trackMap[key]) {
           trackMap[key] = [];
         }
-        trackMap[key].push(row.get('lat'));
-        trackMap[key].push(row.get('lon'));
-        trackMap[key].push(row.get('alt'));
+        trackMap[key].push(coordinate);
       }
 
-      if (row.get('type') === 'terrain') {
-        if (!terrainMap[key]) {
-          terrainMap[key] = [];
-        }
-        terrainMap[key].push(row.get('lat'));
-        terrainMap[key].push(row.get('lon'));
-        terrainMap[key].push(row.get('alt'));
-      }
+      // if (row.get('type') === 'terrain') {
+      //   if (!terrainMap[key]) {
+      //     terrainMap[key] = [];
+      //   }
+      //   terrainMap[key].push(coordinate);
+      // }
       count++;
     });
     const dataProcess = Date.now();
@@ -238,10 +250,7 @@ class CesiumPlot extends React.Component {
         {
           name: `Track ${trackId}`,
           polyline: {
-            positions: cesium.Cartesian3.fromRadiansArrayHeights(
-              truthMap[trackId],
-              viewer.scene.globe.ellipsoid
-            ),
+            positions: truthMap[trackId],
             width: 2,
             material: cesium.Color.BLUE
           }
@@ -254,10 +263,7 @@ class CesiumPlot extends React.Component {
         {
           name: `Track ${truthId}`,
           polyline: {
-            positions: cesium.Cartesian3.fromRadiansArrayHeights(
-              trackMap[truthId],
-              viewer.scene.globe.ellipsoid
-            ),
+            positions: trackMap[truthId],
             width: 2,
             material: cesium.Color.GREEN
           }
@@ -265,21 +271,21 @@ class CesiumPlot extends React.Component {
       );
     }
 
-    for (var terrainId in terrainMap) {
-      viewer.entities.add(
-        {
-          name: `Track ${terrainId}`,
-          polyline: {
-            positions: cesium.Cartesian3.fromRadiansArrayHeights(
-              terrainMap[terrainId],
-              viewer.scene.globe.ellipsoid,
-            ),
-            width: 2,
-            material: cesium.Color.RED
-          }
-        }
-      );
-    }
+    // for (var terrainId in terrainMap) {
+    //   viewer.entities.add(
+    //     {
+    //       name: `Track ${terrainId}`,
+    //       polyline: {
+    //         positions: cesium.Cartesian3.fromRadiansArrayHeights(
+    //           terrainMap[terrainId],
+    //           viewer.scene.globe.ellipsoid,
+    //         ),
+    //         width: 2,
+    //         material: cesium.Color.RED
+    //       }
+    //     }
+    //   );
+    // }
 
     const dataRender = Date.now();
     seconds = (dataRender - dataProcess) / 1000;
