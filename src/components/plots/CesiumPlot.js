@@ -132,29 +132,56 @@ class CesiumPlot extends React.Component {
 
     const addRectangularSensor =() => {
       viewer.scene.primitives.removeAll();
-      const sensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(sensorOptions);
-      viewer.scene.primitives.add(sensor);
+      const recSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(sensorOptions);
+      viewer.scene.primitives.add(recSensor);
+    };
+
+    const addConicSensor =() => {
+      // viewer.scene.primitives.removeAll();
+      const conicSensor = new CesiumSensorVolumes.ConicSensorGraphics({
+        radius: 1000000.0,
+        innerHalfAngle: Cesium.Math.toRadians(5.0),
+        outerHalfAngle: Cesium.Math.toRadians(85.0)
+      });
+      viewer.scene.primitives.add(conicSensor);
     };
 
     const addSphericalSensor = () => {
-      console.debug(radarLon, radarLat, radarAlt);
+      console.debug(radarLon, radarLat, radarAlt, maxRange);
       var redSphere = viewer.entities.add({
         name: 'Red sphere with black outline',
-        position: Cesium.Cartesian3.fromRadians(
+        position: cesium.Cartesian3.fromRadians(
           radarLon,
           radarLat,
           radarAlt
         ),
         ellipsoid: {
-          radii: new Cesium.Cartesian3(maxRange, maxRange, maxRange),
-          material: Cesium.Color.RED.withAlpha(0.5),
+          radii: new cesium.Cartesian3(maxRange, maxRange, maxRange),
+          material: cesium.Color.RED.withAlpha(0.5),
           outline: true,
-          outlineColor: Cesium.Color.BLACK
+          outlineColor: cesium.Color.BLACK
         }
       });
     };
 
-    addRectangularSensor();
+    const addCustomSensor = () => {
+      // viewer.scene.primitives.removeAll();
+      var customSensor = new CesiumSensorVolumes.CustomSensorVolume();
+      var directions = [];
+      for (var i = 0; i < 8; ++i) {
+        var clock = cesium.Math.toRadians(45.0 * i);
+        var cone = cesium.Math.toRadians(25.0);
+        directions.push(new cesium.Spherical(clock, cone));
+      }
+      customSensor.modelMatrix = getModelMatrix();
+      customSensor.radius = 20000000.0;
+      customSensor.directions = directions;
+      viewer.scene.primitives.add(customSensor);
+    };
+
+    // addRectangularSensor();
+    // addSphericalSensor();
+    addConicSensor();
     return;
   }
 
