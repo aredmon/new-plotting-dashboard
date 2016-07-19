@@ -70,15 +70,21 @@ class CesiumPlot extends React.Component {
 
   drawShapes () {
     const { cesium, viewer } = this;
-    const { maxEl,
+    let { maxEl,
       minEl,
-      maxRange,
+      maxRange: radarRange,
       lat: radarLat,
       lon: radarLon,
       positionAlt: radarAlt,
+      startAz,
+      endAz,
       radarId,
       radarName
     } = this.props.radarData.toJS();
+    // massage vars as necessary
+    if (startAz !== 0) { startAz = 0; }
+    if (endAz > Math.PI/4) { endAz = Math.PI/4; }
+
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
     var cone = cesium.Math.toRadians(0.0);
@@ -110,7 +116,7 @@ class CesiumPlot extends React.Component {
 
     const sensorOptions = {
       modelMatrix: getModelMatrix(),
-      radius: 500000.0,
+      radius: radarRange,
       xHalfAngle: cesium.Math.toRadians(40.0),
       yHalfAngle: cesium.Math.toRadians(35.0),
       lateralSurfaceMaterial: new cesium.Material({
@@ -149,7 +155,6 @@ class CesiumPlot extends React.Component {
     };
 
     addRectangularSensor();
-    addSphericalSensor();
     return;
   }
 
