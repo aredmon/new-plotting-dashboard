@@ -81,6 +81,8 @@ export class PlotView extends React.Component {
       return row.get('radarId') === selectedIndex;
     }).first();
 
+    const radarName = radarData.get('radarName');
+
     // control which plot to display
     switch (params.plotType) {
       case 'position':
@@ -93,7 +95,7 @@ export class PlotView extends React.Component {
         ];
         this.plot = <TruthVsTrack
           data={trackData}
-          title={`Radar ${selectedIndex} - ${this.fieldList[selectedField].name} vs Time`}
+          title={`${radarName} - ${this.fieldList[selectedField].name} vs Time`}
           fieldX='t_valid'
           fieldY={this.fieldList[selectedField].field}
           width={width}
@@ -107,7 +109,7 @@ export class PlotView extends React.Component {
         this.state.showTrackList = true;
         this.plot = <TruthVsTrack
           data={trackData}
-          title={`Radar ${selectedIndex} - Altitude vs Time`}
+          title={`${radarName} - Altitude vs Time`}
           fieldX='t_valid'
           fieldY='alt'
           altSeries1='terrain'
@@ -123,7 +125,7 @@ export class PlotView extends React.Component {
         this.plot = <Position3D
           data={trackData}
           radarData={radarData}
-          title={'Position LLA'}
+          title={'${radarName - 3D LLA}'}
           width={width}
           height={height}
           />;
