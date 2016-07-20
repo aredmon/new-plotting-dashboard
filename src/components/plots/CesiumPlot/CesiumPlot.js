@@ -249,7 +249,7 @@ class CesiumPlot extends React.Component {
     for (var truthId in trackMap) {
       viewer.entities.add(
         {
-          name: `Track ${truthId}`,
+          name: `Truth ${truthId}`,
           polyline: {
             positions: trackMap[truthId],
             width: 2,
