@@ -8,7 +8,7 @@ import ListItem from 'material-ui/lib/lists/list-item';
 // plots
 import TruthVsTrack from 'components/plots/TruthVsTrack';
 import Position3D from 'components/plots/Position3D';
-import CesiumPlot from 'components/plots/CesiumPlot';
+import CesiumPlot from 'components/plots/CesiumPlot/CesiumPlot';
 
 export class PlotView extends React.Component {
   constructor (props) {

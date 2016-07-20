@@ -44,7 +44,7 @@ class CesiumPlot extends React.Component {
     this.cesium = Cesium;
     this.viewer = Viewer;
     this.drawScene();
-    Viewer.zoomTo(Viewer.entities);
+    Viewer.flyTo(Viewer.entities);
   }
 
   /**
@@ -67,6 +67,7 @@ class CesiumPlot extends React.Component {
     this.drawThreats();
     this.drawShapes();
     this.viewer.scene.globe.depthTestAgainstTerrain = true;
+    this.viewer.flyTo(this.viewer.entities);
   }
 
   clearScene () {
@@ -96,8 +97,8 @@ class CesiumPlot extends React.Component {
 
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
-    var cone = cesium.Math.toRadians(145.0);
-    var twist = -halfAngleX;
+    var cone = cesium.Math.toRadians(132.0);
+    var twist = -halfAngleX-cesium.Math.toRadians(3.0);
     var location = ellipsoid.cartographicToCartesian(
       new cesium.Cartographic(
         radarLon,
@@ -132,7 +133,7 @@ class CesiumPlot extends React.Component {
         fabric: {
           type: 'Color',
           uniforms: {
-            color: new cesium.Color(0.0, 1.0, 1.0, 0.5)
+            color: new cesium.Color(0.0, 1.0, 1.0, 0.4)
           }
         }
       }),
@@ -142,18 +143,6 @@ class CesiumPlot extends React.Component {
     const addRectangularSensor =() => {
       const recSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(sensorOptions);
       viewer.scene.primitives.add(recSensor);
-    };
-
-    const addConicSensor =() => {
-      const myConicSensor = new CesiumSensorVolumes.ConicSensorGraphics({
-        radius: 100000000.0,
-        modelMatrix: getModelMatrix(),
-        innerHalfAngle: Cesium.Math.toRadians(25.0),
-        outerHalfAngle: Cesium.Math.toRadians(85.0)
-      });
-      var entity = viewer.entities.getOrCreateEntity('conicSensor');
-      entity.addProperty('conicSensor');
-      viewer.entities.add(myConicSensor);
     };
 
     const addSphericalSensor = () => {
@@ -191,7 +180,6 @@ class CesiumPlot extends React.Component {
 
     addRectangularSensor();
     // addSphericalSensor();
-    addConicSensor();
     return;
   }
 
