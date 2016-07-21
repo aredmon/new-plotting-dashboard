@@ -1,7 +1,7 @@
 import React, { PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import Plotly from 'plotly.js';
-// import Theme from '../../helpers/theme.js';
+import Theme from '../../helpers/theme.js';
 
 class Position3D extends React.Component {
 
