@@ -91,6 +91,10 @@ class CesiumPlot extends React.Component {
       modelName,
       modelId
     } = this.props.radarData.toJS();
+    const airRange = radarRange;
+    const ramRange = radarRange/10;
+    const airCoverageColor = new cesium.Color(0.0, 1.0, 1.0, 0.3);
+    const ramCoverageColor = new cesium.Color(1.0, 0.54, 0.0, 0.3);
     const halfAngleX = Math.abs((maxEl-minEl))/2;
     const halfAngleY = halfSector;
 
@@ -105,12 +109,16 @@ class CesiumPlot extends React.Component {
         radarAlt
       ));
 
-    const getModelMatrix = () => {
+    /**
+     * Creates a matrix model to orient the sensor
+     * @param  {[Number]} rotation The angle in Radians to rotate the sensor relative to East
+     */
+    const getModelMatrix = (rotation) => {
       var modelMatrix = cesium.Transforms.northUpEastToFixedFrame(location);
       var orientation = cesium.Matrix3.multiply(
         cesium.Matrix3.multiply(
           cesium.Matrix3.fromRotationZ(clock),
-          cesium.Matrix3.fromRotationY(cone),
+          cesium.Matrix3.fromRotationY(rotation),
           new cesium.Matrix3()),
         cesium.Matrix3.fromRotationX(twist),
         new cesium.Matrix3()
@@ -123,40 +131,96 @@ class CesiumPlot extends React.Component {
           new cesium.Matrix4());
     };
 
-    const sensorOptions = {
-      modelMatrix: getModelMatrix(),
-      radius: radarRange,
-      xHalfAngle: halfAngleX,
-      yHalfAngle: halfAngleY,
-      lateralSurfaceMaterial: new cesium.Material({
-        fabric: {
-          type: 'Color',
-          uniforms: {
-            color: new cesium.Color(0.0, 1.0, 1.0, 0.4)
+    /**
+     * This method creates the sensor options object
+     * @param  {[MatrixModel]} model  The sensor's matrix model
+     * @param  {[Number]} range       The sensor's range
+     * @param  {[Number]} halfAngle   The sensor's half angle
+     * @param  {[Color]} color        The color of the coverage volume
+     * @return {[Object]}             The sensor configuration object
+     */
+    const getSensorOptions = (model, range, halfAngle, color) => {
+      return {
+        modelMatrix: model,
+        radius: range,
+        xHalfAngle: halfAngleX,
+        yHalfAngle: halfAngle,
+        lateralSurfaceMaterial: new cesium.Material({
+          fabric: {
+            type: 'Color',
+            uniforms: {
+              color: color
+            }
           }
-        }
-      }),
-      showIntersection: true
+        }),
+        showIntersection: false
+      };
     };
 
+    /**
+     * Create a rectangular Sensor
+     * @return {[type]} [description]
+     */
     const addRectangularSensor =() => {
-      const recSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(sensorOptions);
-      viewer.scene.primitives.add(recSensor);
+      const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+        getSensorOptions(getModelMatrix(boreAzimuth), airRange, halfAngleY, airCoverageColor));
+      viewer.scene.primitives.add(airSensor);
+
+      const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+        getSensorOptions(getModelMatrix(boreAzimuth), ramRange, halfAngleY, ramCoverageColor));
+      viewer.scene.primitives.add(ramSensor);
     };
 
+    /**
+     * Create an array of rectangular sensors
+     */
+    const addRectangularSensorArray =() => {
+      const sectorIncrements = cesium.Math.toRadians(45);
+      const startingAngle = cone+(sectorIncrements/2);
+      let count = 0;
+      for (var i = startingAngle; i < halfSector*2; i+=sectorIncrements*2) {
+        const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+          getSensorOptions(getModelMatrix(i), airRange, sectorIncrements, airCoverageColor));
+        const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+          getSensorOptions(getModelMatrix(i), ramRange, sectorIncrements, ramCoverageColor));
+        viewer.scene.primitives.add(airSensor);
+        viewer.scene.primitives.add(ramSensor);
+      }
+    };
+
+    /**
+     * Create a spherical sensor
+     */
     const addSphericalSensor = () => {
-      var redSphere = viewer.entities.add({
-        name: 'Red sphere with black outline',
+      // add an Air coverage sensor
+      viewer.entities.add({
+        name: `${radarName} - Air Coverage`,
         position: cesium.Cartesian3.fromRadians(
           radarLon,
           radarLat,
           radarAlt
         ),
         ellipsoid: {
-          radii: new cesium.Cartesian3(radarRange, radarRange, radarRange),
-          material: cesium.Color.RED.withAlpha(0.5),
+          radii: new cesium.Cartesian3(airRange, airRange, airRange),
+          material: airCoverageColor,
           outline: true,
-          outlineColor: cesium.Color.BLACK
+          outlineColor: new cesium.Color(0.0, 1.0, 1.0, 1.0)
+        }
+      });
+
+      // add a RAM coverage sensor
+      viewer.entities.add({
+        name: `${radarName} - RAM Coverage`,
+        position: cesium.Cartesian3.fromRadians(
+          radarLon,
+          radarLat,
+          radarAlt
+        ),
+        ellipsoid: {
+          radii: new cesium.Cartesian3(ramRange, ramRange, ramRange),
+          material: ramCoverageColor,
+          outline: true,
+          outlineColor: new cesium.Color(1.0, 0.54, 0.0, 1.0)
         }
       });
     };
@@ -179,31 +243,12 @@ class CesiumPlot extends React.Component {
     if (cesium.Math.toDegrees(halfAngleX) > 43 &&
         cesium.Math.toDegrees(halfAngleY) > 170) {
       addSphericalSensor();
-    } else {
+    } else
+    if (cesium.Math.toDegrees(halfAngleY) < 46) {
       addRectangularSensor();
+    } else {
+      addRectangularSensorArray();
     }
-
-    var labels = viewer.scene.primitives.add(new Cesium.LabelCollection());
-    labels.add({
-      position: cesium.Cartesian3.fromRadians(
-        radarLon,
-        radarLat
-      ),
-      text: `${radarName}`,
-      eyeOffset: new cesium.Cartesian3(0.0, 20000.0, 0.0)
-    });
-
-    labels.add({
-      position: cesium.Cartesian3.fromRadians(
-        radarLon,
-        radarLat
-      ),
-      text: `${modelName} ${modelId}`,
-      eyeOffset: new cesium.Cartesian3(0.0, 0.0, 0.0),
-      scale: 0.75
-    });
-
-    // addSphericalSensor();
     return;
   }
 
