@@ -92,7 +92,7 @@ class CesiumPlot extends React.Component {
       modelId
     } = this.props.radarData.toJS();
     const halfAngleX = Math.abs((maxEl-minEl))/2;
-    const halfAngleY = cesium.Math.toRadians(halfSector);
+    const halfAngleY = halfSector;
 
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
