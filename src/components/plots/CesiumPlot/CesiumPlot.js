@@ -84,20 +84,19 @@ class CesiumPlot extends React.Component {
       lat: radarLat,
       lon: radarLon,
       positionAlt: radarAlt,
-      startAz,
-      endAz,
+      halfSector,
+      boreAzimuth,
       radarId,
-      radarName
+      radarName,
+      modelName,
+      modelId
     } = this.props.radarData.toJS();
-    // massage vars as necessary
-    if (startAz !== 0) { startAz = 0; }
-    if (endAz > Math.PI/2) { endAz = Math.PI/2; }
-    const halfAngleX = cesium.Math.toRadians(Math.abs((maxEl-minEl))/2);
-    const halfAngleY = (endAz-startAz)/2;
+    const halfAngleX = Math.abs((maxEl-minEl))/2;
+    const halfAngleY = cesium.Math.toRadians(halfSector);
 
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
-    var cone = cesium.Math.toRadians(132.0);
+    var cone = boreAzimuth;
     var twist = -halfAngleX-cesium.Math.toRadians(3.0);
     var location = ellipsoid.cartographicToCartesian(
       new cesium.Cartographic(
@@ -126,9 +125,9 @@ class CesiumPlot extends React.Component {
 
     const sensorOptions = {
       modelMatrix: getModelMatrix(),
-      radius: radarRange*2,
-      xHalfAngle: cesium.Math.toRadians(Math.abs((maxEl-minEl))/2),
-      yHalfAngle: (endAz-startAz)/2,
+      radius: radarRange,
+      xHalfAngle: halfAngleX,
+      yHalfAngle: halfAngleY,
       lateralSurfaceMaterial: new cesium.Material({
         fabric: {
           type: 'Color',
@@ -146,7 +145,6 @@ class CesiumPlot extends React.Component {
     };
 
     const addSphericalSensor = () => {
-      console.debug(radarLon, radarLat, radarAlt, radarRange);
       var redSphere = viewer.entities.add({
         name: 'Red sphere with black outline',
         position: cesium.Cartesian3.fromRadians(
@@ -164,7 +162,6 @@ class CesiumPlot extends React.Component {
     };
 
     const addCustomSensor = () => {
-      // viewer.scene.primitives.removeAll();
       var customSensor = new CesiumSensorVolumes.CustomSensorVolume();
       var directions = [];
       for (var i = 0; i < 8; ++i) {
@@ -178,7 +175,34 @@ class CesiumPlot extends React.Component {
       viewer.scene.primitives.add(customSensor);
     };
 
-    addRectangularSensor();
+    // check if the sensor is approximately a dome sensor
+    if (cesium.Math.toDegrees(halfAngleX) > 43 &&
+        cesium.Math.toDegrees(halfAngleY) > 170) {
+      addSphericalSensor();
+    } else {
+      addRectangularSensor();
+    }
+
+    var labels = viewer.scene.primitives.add(new Cesium.LabelCollection());
+    labels.add({
+      position: cesium.Cartesian3.fromRadians(
+        radarLon,
+        radarLat
+      ),
+      text: `${radarName}`,
+      eyeOffset: new cesium.Cartesian3(0.0, 20000.0, 0.0)
+    });
+
+    labels.add({
+      position: cesium.Cartesian3.fromRadians(
+        radarLon,
+        radarLat
+      ),
+      text: `${modelName} ${modelId}`,
+      eyeOffset: new cesium.Cartesian3(0.0, 0.0, 0.0),
+      scale: 0.75
+    });
+
     // addSphericalSensor();
     return;
   }
