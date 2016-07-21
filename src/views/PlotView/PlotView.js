@@ -39,7 +39,6 @@ export class PlotView extends React.Component {
     containerHeight: PropTypes.number,
     containerWidth: PropTypes.number
   }
-
   /**
    * Called when a track is selected from the track list. This method
    * updates the state object with the selected track index
