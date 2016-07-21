@@ -162,7 +162,6 @@ class CesiumPlot extends React.Component {
     };
 
     const addCustomSensor = () => {
-      // viewer.scene.primitives.removeAll();
       var customSensor = new CesiumSensorVolumes.CustomSensorVolume();
       var directions = [];
       for (var i = 0; i < 8; ++i) {
