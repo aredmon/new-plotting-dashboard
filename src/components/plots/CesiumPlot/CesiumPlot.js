@@ -1,5 +1,4 @@
 import React, { PropTypes } from 'react';
-import { connect } from 'react-redux';
 /* eslint-disable no-unused-vars, no-undef */
 // The two cesium imports are imported only to include the scripts. The
 // varables are not used
@@ -11,9 +10,12 @@ class CesiumPlot extends React.Component {
 
   constructor () {
     super();
-    this.state = {};
     this.drawShapes = this.drawShapes.bind(this);
     this.drawThreats = this.drawThreats.bind(this);
+    this.toggleRamTracks = this.toggleRamTracks.bind(this);
+    this.toggleRamTruths = this.toggleRamTruths.bind(this);
+    this.toggleAirTracks = this.toggleAirTracks.bind(this);
+    this.toggleAirTruths = this.toggleAirTruths.bind(this);
   }
   // data should be an array of track and truth data
   // filtered by a track id
@@ -36,7 +38,7 @@ class CesiumPlot extends React.Component {
     window.CESIUM_BASE_URL = '../Cesium';
     const Cesium = window.Cesium;
     Cesium.BingMapsApi.defaultKey = 'AhguTre8xUgKVVHSEr1OhOLMeDm-kEUc5-4Jq6VZSHUHEBAal9P_YRs5gNW3BjeV';
-    const Viewer = new Cesium.Viewer('cesiumContainer');
+    const Viewer = new Cesium.Viewer('cesiumContainer', { infoBox: false });
     var terrainProvider = new Cesium.CesiumTerrainProvider({
       url: '//assets.agi.com/stk-terrain/world'
     });
@@ -68,6 +70,9 @@ class CesiumPlot extends React.Component {
     this.drawShapes();
     this.viewer.scene.globe.depthTestAgainstTerrain = true;
     // this.viewer.flyTo(this.viewer.entities);
+
+    // add toolbar buttons
+    // this.addToolbarButton('RAM Tracks', this.toggleRamTracks);
   }
 
   clearScene () {
@@ -255,9 +260,11 @@ class CesiumPlot extends React.Component {
   drawThreats () {
     const { data } = this.props;
     const { cesium, viewer } = this;
-    let truthMap = {};
-    let trackMap = {};
-    let terrainMap = {};
+    let ramTruthMap = {};
+    let ramTrackMap = {};
+    let airTruthMap = {};
+    let airTrackMap = {};
+
     // time this task
     const begin = Date.now();
     let count = 0;
@@ -276,51 +283,55 @@ class CesiumPlot extends React.Component {
           alt
         ));
 
-      if (row.get('type') === 'truth') {
-        if (!truthMap[key]) {
-          truthMap[key] = [];
+      // create array of ram truths
+      if (row.get('type') === 'truth' && row.get('objType') === 'BALLISTIC') {
+        if (!ramTruthMap[key]) {
+          ramTruthMap[key] = [];
         }
-        truthMap[key].push(coordinate);
+        ramTruthMap[key].push(coordinate);
       }
 
-      if (row.get('type') === 'track') {
-        if (!trackMap[key]) {
-          trackMap[key] = [];
+      // create array of ram tracks
+      if (row.get('type') === 'track' && row.get('objType') === 'BALLISTIC') {
+        if (!ramTrackMap[key]) {
+          ramTrackMap[key] = [];
         }
-        trackMap[key].push(coordinate);
+        ramTrackMap[key].push(coordinate);
       }
 
-      // if (row.get('type') === 'terrain') {
-      //   if (!terrainMap[key]) {
-      //     terrainMap[key] = [];
-      //   }
-      //   terrainMap[key].push(coordinate);
-      // }
+      // create array of air truths
+      if (row.get('type') === 'truth' &&
+          (row.get('objType') === 'AIRBREATHER' || row.get('objectType') === 'AIRBREATHER')) {
+        if (!airTruthMap[key]) {
+          airTruthMap[key] = [];
+        }
+        airTruthMap[key].push(coordinate);
+      }
+
+      // create array of air tracks
+      if (row.get('type') === 'track' &&
+          (row.get('objType') === 'AIRBREATHER' || row.get('objectType') === 'AIRBREATHER')) {
+        if (!airTrackMap[key]) {
+          airTrackMap[key] = [];
+        }
+        airTrackMap[key].push(coordinate);
+      }
+
       count++;
     });
     const dataProcess = Date.now();
     let seconds = (dataProcess - begin) / 1000;
     console.debug(`Processed ${count} rows in ${seconds} seconds.`);
 
-    for (var trackId in truthMap) {
+    // Ram Tracks
+    const ramTracks = viewer.entities.add(new cesium.Entity({id: 'ramTracks'}));
+    for (var ramTrackId in ramTrackMap) {
       viewer.entities.add(
         {
-          name: `Track ${trackId}`,
+          name: `Track ${ramTrackId}`,
+          parent: ramTracks,
           polyline: {
-            positions: truthMap[trackId],
-            width: 2,
-            material: cesium.Color.BLUE
-          }
-        }
-      );
-    }
-
-    for (var truthId in trackMap) {
-      viewer.entities.add(
-        {
-          name: `Truth ${truthId}`,
-          polyline: {
-            positions: trackMap[truthId],
+            positions: ramTrackMap[ramTrackId],
             width: 2,
             material: cesium.Color.GREEN
           }
@@ -328,25 +339,109 @@ class CesiumPlot extends React.Component {
       );
     }
 
-    // for (var terrainId in terrainMap) {
-    //   viewer.entities.add(
-    //     {
-    //       name: `Track ${terrainId}`,
-    //       polyline: {
-    //         positions: cesium.Cartesian3.fromRadiansArrayHeights(
-    //           terrainMap[terrainId],
-    //           viewer.scene.globe.ellipsoid,
-    //         ),
-    //         width: 2,
-    //         material: cesium.Color.RED
-    //       }
-    //     }
-    //   );
-    // }
+    // Ram Truths
+    const ramTruths = viewer.entities.add(new cesium.Entity({id: 'ramTruths'}));
+    for (var ramTruthId in ramTruthMap) {
+      viewer.entities.add(
+        {
+          name: `Truth ${ramTruthId}`,
+          parent: ramTruths,
+          polyline: {
+            positions: ramTruthMap[ramTruthId],
+            width: 2,
+            material: cesium.Color.BLUE
+          }
+        }
+      );
+    }
+
+    // Air Tracks
+    const airTracks = viewer.entities.add(new cesium.Entity({id: 'airTracks'}));
+    for (var airTrackId in airTrackMap) {
+      viewer.entities.add(
+        {
+          name: `Track ${airTrackId}`,
+          parent: airTracks,
+          polyline: {
+            positions: airTrackMap[airTrackId],
+            width: 2,
+            material: cesium.Color.GREEN
+          }
+        }
+      );
+    }
+
+    // Air Truths
+    const airTruths = viewer.entities.add(new cesium.Entity({id: 'airTruths'}));
+    for (var airTruthId in airTruthMap) {
+      viewer.entities.add(
+        {
+          name: `Truth ${airTruthId}`,
+          parent: airTruths,
+          polyline: {
+            positions: airTruthMap[airTruthId],
+            width: 2,
+            material: cesium.Color.BLUE
+          }
+        }
+      );
+    }
 
     const dataRender = Date.now();
     seconds = (dataRender - dataProcess) / 1000;
     console.debug(`Rendered data in ${seconds} seconds.`);
+  }
+
+  /**
+   * Click handler to toggle ram tracks
+   */
+  toggleRamTracks () {
+    const { entities } = this.viewer;
+    const tracks = entities.getById('ramTracks');
+    if (tracks) {
+      tracks.show = !tracks.show;
+    } else {
+      console.debug('cannot find tracks entity');
+    }
+  }
+
+  /**
+   * Click handler to toggle ram truths
+   */
+  toggleRamTruths () {
+    const { entities } = this.viewer;
+    const tracks = entities.getById('ramTruths');
+    if (tracks) {
+      tracks.show = !tracks.show;
+    } else {
+      console.debug('cannot find tracks entity');
+    }
+  }
+
+  /**
+   * Click handler to toggle air tracks
+   */
+  toggleAirTracks () {
+    const { entities } = this.viewer;
+    const tracks = entities.getById('airTracks');
+    if (tracks) {
+      tracks.show = !tracks.show;
+    } else {
+      console.debug('cannot find tracks entity');
+    }
+  }
+
+  /**
+   * Click handler to toggle air truths
+   */
+  toggleAirTruths () {
+    const { entities } = this.viewer;
+    const tracks = entities.getById('airTruths');
+    if (tracks) {
+      tracks.show = !tracks.show;
+    } else {
+      console.debug('cannot find tracks entity');
+    }
   }
 
   /**
@@ -360,14 +455,63 @@ class CesiumPlot extends React.Component {
     if (this.viewer) {
       this.drawScene();
     }
+
+    const styles = {
+      parent: {
+        position: 'relative',
+        height: '100%',
+        width: '100%'
+      },
+      cesiumContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        height: '100%',
+        width: '100%',
+        margin: 0,
+        overflow: 'hidden',
+        padding: 0,
+        fontFamily: 'sans-serif'
+      },
+      toolbar: {
+        margin: '5px',
+        padding: '2px 5px',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        zIndex: '100'
+      }
+    };
+
     return (
-      <div id={'cesiumContainer'} style={{height: '100%'}}/>
+      <div style={styles.parent}>
+        <div id={'cesiumContainer'} style={styles.cesiumContainer}>
+          <div id={'toolbar'} style={styles.toolbar}>
+            <button
+              className={'cesium-button'}
+              onClick={this.toggleRamTracks}>
+                RAM Tracks
+            </button>
+            <button
+              className={'cesium-button'}
+              onClick={this.toggleRamTruths}>
+                RAM Truths
+            </button>
+            <button
+              className={'cesium-button'}
+              onClick={this.toggleAirTracks}>
+                Air Tracks
+            </button>
+            <button
+              className={'cesium-button'}
+              onClick={this.toggleAirTruths}>
+                Air Truths
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 }
 
-const mapStateToProps = (state) => ({
-  trackIds: state.metrics.get('trackIds')
-});
-
-export default connect(mapStateToProps)(CesiumPlot);
+export default CesiumPlot;
