@@ -67,7 +67,7 @@ class CesiumPlot extends React.Component {
     this.drawThreats();
     this.drawShapes();
     this.viewer.scene.globe.depthTestAgainstTerrain = true;
-    this.viewer.flyTo(this.viewer.entities);
+    // this.viewer.flyTo(this.viewer.entities);
   }
 
   clearScene () {
@@ -100,7 +100,7 @@ class CesiumPlot extends React.Component {
 
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
-    var cone = boreAzimuth;
+    var cone = -(boreAzimuth - cesium.Math.toRadians(90));
     var twist = -halfAngleX-cesium.Math.toRadians(3.0);
     var location = ellipsoid.cartographicToCartesian(
       new cesium.Cartographic(
@@ -163,11 +163,11 @@ class CesiumPlot extends React.Component {
      */
     const addRectangularSensor =() => {
       const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
-        getSensorOptions(getModelMatrix(boreAzimuth), airRange, halfAngleY, airCoverageColor));
+        getSensorOptions(getModelMatrix(cone), airRange, halfAngleY, airCoverageColor));
       viewer.scene.primitives.add(airSensor);
 
       const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
-        getSensorOptions(getModelMatrix(boreAzimuth), ramRange, halfAngleY, ramCoverageColor));
+        getSensorOptions(getModelMatrix(cone), ramRange, halfAngleY, ramCoverageColor));
       viewer.scene.primitives.add(ramSensor);
     };
 
