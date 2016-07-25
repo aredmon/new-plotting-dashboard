@@ -16,6 +16,8 @@ class CesiumPlot extends React.Component {
     this.toggleRamTruths = this.toggleRamTruths.bind(this);
     this.toggleAirTracks = this.toggleAirTracks.bind(this);
     this.toggleAirTruths = this.toggleAirTruths.bind(this);
+    this.toggleAirSensors = this.toggleAirSensors.bind(this);
+    this.toggleRamSensors = this.toggleRamSensors.bind(this);
   }
   // data should be an array of track and truth data
   // filtered by a track id
@@ -167,13 +169,13 @@ class CesiumPlot extends React.Component {
      * @return {[type]} [description]
      */
     const addRectangularSensor =() => {
-      const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+      this.airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
         getSensorOptions(getModelMatrix(cone), airRange, halfAngleY, airCoverageColor));
-      viewer.scene.primitives.add(airSensor);
+      viewer.scene.primitives.add(this.airSensor);
 
-      const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+      this.ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
         getSensorOptions(getModelMatrix(cone), ramRange, halfAngleY, ramCoverageColor));
-      viewer.scene.primitives.add(ramSensor);
+      viewer.scene.primitives.add(this.ramSensor);
     };
 
     /**
@@ -181,16 +183,20 @@ class CesiumPlot extends React.Component {
      */
     const addRectangularSensorArray =() => {
       const sectorIncrements = cesium.Math.toRadians(45);
-      const startingAngle = cone+(sectorIncrements/2);
+      const startingAngle = cone;
       let count = 0;
+      this.airSensor = new cesium.PrimitiveCollection();
+      this.ramSensor = new cesium.PrimitiveCollection();
       for (var i = startingAngle; i < halfSector*2; i+=sectorIncrements*2) {
         const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
           getSensorOptions(getModelMatrix(i), airRange, sectorIncrements, airCoverageColor));
         const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
           getSensorOptions(getModelMatrix(i), ramRange, sectorIncrements, ramCoverageColor));
-        viewer.scene.primitives.add(airSensor);
-        viewer.scene.primitives.add(ramSensor);
+        this.airSensor.add(airSensor);
+        this.ramSensor.add(ramSensor);
       }
+      viewer.scene.primitives.add(this.airSensor);
+      viewer.scene.primitives.add(this.ramSensor);
     };
 
     /**
@@ -198,7 +204,7 @@ class CesiumPlot extends React.Component {
      */
     const addSphericalSensor = () => {
       // add an Air coverage sensor
-      viewer.entities.add({
+      this.airSensor = new cesium.Entity({
         name: `${radarName} - Air Coverage`,
         position: cesium.Cartesian3.fromRadians(
           radarLon,
@@ -213,8 +219,7 @@ class CesiumPlot extends React.Component {
         }
       });
 
-      // add a RAM coverage sensor
-      viewer.entities.add({
+      this.ramSensor = new cesium.Entity({
         name: `${radarName} - RAM Coverage`,
         position: cesium.Cartesian3.fromRadians(
           radarLon,
@@ -228,6 +233,9 @@ class CesiumPlot extends React.Component {
           outlineColor: new cesium.Color(1.0, 0.54, 0.0, 1.0)
         }
       });
+
+      viewer.entities.add(this.airSensor);
+      viewer.entities.add(this.ramSensor);
     };
 
     const addCustomSensor = () => {
@@ -244,14 +252,28 @@ class CesiumPlot extends React.Component {
       viewer.scene.primitives.add(customSensor);
     };
 
+    const addLabels = () => {
+      var labels = viewer.scene.primitives.add(new Cesium.LabelCollection());
+      labels.add({
+        position: cesium.Cartesian3.fromRadians(
+        radarLon,
+        radarLat
+        ),
+        text: `${radarName}`
+      });
+    };
+
     // check if the sensor is approximately a dome sensor
     if (cesium.Math.toDegrees(halfAngleX) > 43 &&
         cesium.Math.toDegrees(halfAngleY) > 170) {
+      console.debug('drawing dome sensor');
       addSphericalSensor();
     } else
     if (cesium.Math.toDegrees(halfAngleY) < 46) {
+      console.debug('drawing rectangular sensor');
       addRectangularSensor();
     } else {
+      console.debug('drawing rectangular sensor array');
       addRectangularSensorArray();
     }
     return;
@@ -445,6 +467,20 @@ class CesiumPlot extends React.Component {
   }
 
   /**
+   * Click handler to toggle air sensors
+   */
+  toggleAirSensors () {
+    this.airSensor.show = !this.airSensor.show;
+  }
+
+  /**
+   * Click handler to toggle air sensors
+   */
+  toggleRamSensors () {
+    this.ramSensor.show = !this.ramSensor.show;
+  }
+
+  /**
    * React lifecycle method. In this plot component react only needs to create an empty
    * div. In the `componentDidMount` method the div reference is assigned to a
    * member variable
@@ -499,6 +535,11 @@ class CesiumPlot extends React.Component {
             </button>
             <button
               className={'cesium-button'}
+              onClick={this.toggleRamSensors}>
+                RAM Sensors
+            </button>
+            <button
+              className={'cesium-button'}
               onClick={this.toggleAirTracks}>
                 Air Tracks
             </button>
@@ -506,6 +547,11 @@ class CesiumPlot extends React.Component {
               className={'cesium-button'}
               onClick={this.toggleAirTruths}>
                 Air Truths
+            </button>
+            <button
+              className={'cesium-button'}
+              onClick={this.toggleAirSensors}>
+                Air Sensors
             </button>
           </div>
         </div>
