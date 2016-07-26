@@ -8,7 +8,7 @@ import ListItem from 'material-ui/lib/lists/list-item';
 // plots
 import TruthVsTrack from 'components/plots/TruthVsTrack';
 import Position3D from 'components/plots/Position3D';
-import CesiumPlot from 'components/plots/CesiumPlot';
+import CesiumPlot from 'components/plots/CesiumPlot/CesiumPlot';
 
 export class PlotView extends React.Component {
   constructor (props) {
@@ -77,7 +77,7 @@ export class PlotView extends React.Component {
     });
 
     const radarData = data.filter((row) => {
-      return row.get('radarId') === selectedIndex;
+      return row.get('type') === 'radarInit';
     }).first();
 
     const radarName = radarData.get('radarName');
