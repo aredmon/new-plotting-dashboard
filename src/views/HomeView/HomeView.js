@@ -3,7 +3,6 @@ import Dropzone from 'react-dropzone';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { addData } from '../../redux/modules/log-data';
-import { loadingImg } from './loading-icon-2.gif';
 
 export class HomeView extends React.Component {
 
