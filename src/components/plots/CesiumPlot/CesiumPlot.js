@@ -288,7 +288,7 @@ class CesiumPlot extends React.Component {
     const begin = Date.now();
     let count = 0;
     data.forEach(row => {
-      let key = row.get('id');
+      let key = row.get('id') || row.get('truthId');
       // get the sim data in cartographic coordinates
       let lat = row.get('lat');
       let lon = row.get('lon');
