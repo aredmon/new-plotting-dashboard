@@ -71,7 +71,8 @@ class CesiumPlot extends React.Component {
     this.drawThreats();
     this.drawShapes();
     this.viewer.scene.globe.depthTestAgainstTerrain = true;
-    // this.viewer.flyTo(this.viewer.entities);
+    this.viewer.flyTo(this.viewer.entities);
+    this.toggleAirSensors();
 
     // add toolbar buttons
     // this.addToolbarButton('RAM Tracks', this.toggleRamTracks);
@@ -87,6 +88,7 @@ class CesiumPlot extends React.Component {
     const { cesium, viewer } = this;
     let { maxEl,
       minEl,
+      offsetEl,
       maxRange: radarRange,
       lat: radarLat,
       lon: radarLon,
@@ -108,7 +110,7 @@ class CesiumPlot extends React.Component {
     var ellipsoid = viewer.scene.globe.ellipsoid;
     var clock = cesium.Math.toRadians(0.0);
     var cone = -(boreAzimuth - cesium.Math.toRadians(90));
-    var twist = -halfAngleX-cesium.Math.toRadians(3.0);
+    var twist = -halfAngleX-offsetEl;
     var location = ellipsoid.cartographicToCartesian(
       new cesium.Cartographic(
         radarLon,
@@ -284,9 +286,10 @@ class CesiumPlot extends React.Component {
     const { cesium, viewer } = this;
     let ramTruthMap = {};
     let ramTrackMap = {};
+    let ramTerrainMap = {};
     let airTruthMap = {};
     let airTrackMap = {};
-
+    let airTerrainMap = {};
     // time this task
     const begin = Date.now();
     let count = 0;
@@ -321,6 +324,13 @@ class CesiumPlot extends React.Component {
         ramTrackMap[key].push(coordinate);
       }
 
+      // create array of ram tracks
+      if (row.get('type') === 'terrain' && row.get('objType') === 'BALLISTIC') {
+        if (!ramTerrainMap[key]) {
+          ramTerrainMap[key] = [];
+        }
+        ramTerrainMap[key].push(coordinate);
+      }
       // create array of air truths
       if (row.get('type') === 'truth' &&
           (row.get('objType') === 'AIRBREATHER' || row.get('objectType') === 'AIRBREATHER')) {
@@ -337,6 +347,15 @@ class CesiumPlot extends React.Component {
           airTrackMap[key] = [];
         }
         airTrackMap[key].push(coordinate);
+      }
+
+      // create array of air tracks
+      if (row.get('type') === 'terrain' &&
+          (row.get('objType') === 'AIRBREATHER' || row.get('objectType') === 'AIRBREATHER')) {
+        if (!airTerrainMap[key]) {
+          airTerrainMap[key] = [];
+        }
+        airTerrainMap[key].push(coordinate);
       }
 
       count++;
@@ -409,6 +428,38 @@ class CesiumPlot extends React.Component {
       );
     }
 
+    // Ram Terrain
+    const ramTerrain = viewer.entities.add(new cesium.Entity({id: 'ramTerrain'}));
+    for (var ramTerrainId in ramTerrainMap) {
+      viewer.entities.add(
+        {
+          name: `Ram Terrain ${ramTrackId}`,
+          parent: ramTerrain,
+          polyline: {
+            positions: ramTerrainMap[ramTerrainId],
+            width: 2,
+            material: cesium.Color.RED
+          }
+        }
+      );
+    }
+
+    // Air Terrain
+    const airTerrain = viewer.entities.add(new cesium.Entity({id: 'airTerrain'}));
+    for (var airTerrainId in airTerrainMap) {
+      viewer.entities.add(
+        {
+          name: `Air Terrain ${airTerrainId}`,
+          parent: airTerrain,
+          polyline: {
+            positions: airTerrainMap[airTerrainId],
+            width: 2,
+            material: cesium.Color.RED
+          }
+        }
+      );
+    }
+
     const dataRender = Date.now();
     seconds = (dataRender - dataProcess) / 1000;
     console.debug(`Rendered data in ${seconds} seconds.`);
@@ -459,6 +510,32 @@ class CesiumPlot extends React.Component {
   toggleAirTruths () {
     const { entities } = this.viewer;
     const tracks = entities.getById('airTruths');
+    if (tracks) {
+      tracks.show = !tracks.show;
+    } else {
+      console.debug('cannot find tracks entity');
+    }
+  }
+
+  /**
+   * Click handler to toggle ram terrain
+   */
+  toggleRamTerrain () {
+    const { entities } = this.viewer;
+    const tracks = entities.getById('ramTerrain');
+    if (tracks) {
+      tracks.show = !tracks.show;
+    } else {
+      console.debug('cannot find tracks entity');
+    }
+  }
+
+  /**
+   * Click handler to toggle ram terrain
+   */
+  toggleAirTerrain () {
+    const { entities } = this.viewer;
+    const tracks = entities.getById('airTerrain');
     if (tracks) {
       tracks.show = !tracks.show;
     } else {
