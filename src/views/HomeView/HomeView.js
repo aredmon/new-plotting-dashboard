@@ -3,6 +3,7 @@ import Dropzone from 'react-dropzone';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { addData } from '../../redux/modules/log-data';
+import { loadingImg } from './loading-icon-2.gif';
 
 export class HomeView extends React.Component {
 
@@ -69,7 +70,7 @@ export class HomeView extends React.Component {
         }}
       >
         <Dropzone onDrop={this.onDrop} style={this.dropzoneStyle}>
-          <div style={{ textAlign: 'center' }}>
+          <div id={'dropContent'} style={{ textAlign: 'center' }}>
             <h3>Drag and drop log file here</h3>
             <h5>Or click to browse for log file</h5>
           </div>

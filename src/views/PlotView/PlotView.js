@@ -73,7 +73,7 @@ export class PlotView extends React.Component {
 
     // get track data
     const trackData = data.filter((row) => {
-      return row.get('radar_id') === selectedIndex;
+      return row.has('radar_id');
     });
 
     const radarData = data.filter((row) => {

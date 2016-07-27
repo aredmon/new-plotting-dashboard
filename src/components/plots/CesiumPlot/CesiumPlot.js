@@ -88,8 +88,8 @@ class CesiumPlot extends React.Component {
     const { cesium, viewer } = this;
     this.airSensor = new cesium.PrimitiveCollection();
     this.ramSensor = new cesium.PrimitiveCollection();
-    this.sphericalAirSensors = viewer.entities.add(new this.cesium.Entity({id: 'sphericalAirSensors'}));
-    this.sphericalRamSensors = viewer.entities.add(new this.cesium.Entity({id: 'sphericalRamSensors'}));
+    this.sphericalAirSensors = viewer.entities.add(new cesium.Entity({id: 'sphericalAirSensors'}));
+    this.sphericalRamSensors = viewer.entities.add(new cesium.Entity({id: 'sphericalRamSensors'}));
 
     for (let rdr of this.props.radarData) {
       let { maxEl,
@@ -320,6 +320,7 @@ class CesiumPlot extends React.Component {
 
       // create array of ram tracks
       if (row.get('type') === 'terrain' && row.get('objType') === 'BALLISTIC') {
+        key = row.get('truthId');
         if (!ramTerrainMap[key]) {
           ramTerrainMap[key] = [];
         }
@@ -346,6 +347,7 @@ class CesiumPlot extends React.Component {
       // create array of air tracks
       if (row.get('type') === 'terrain' &&
           (row.get('objType') === 'AIRBREATHER' || row.get('objectType') === 'AIRBREATHER')) {
+        key = row.get('truthId');
         if (!airTerrainMap[key]) {
           airTerrainMap[key] = [];
         }
