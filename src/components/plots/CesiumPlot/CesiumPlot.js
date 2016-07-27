@@ -86,6 +86,11 @@ class CesiumPlot extends React.Component {
 
   drawShapes () {
     const { cesium, viewer } = this;
+    this.airSensor = new cesium.PrimitiveCollection();
+    this.ramSensor = new cesium.PrimitiveCollection();
+    this.sphericalAirSensors = viewer.entities.add(new this.cesium.Entity({id: 'sphericalAirSensors'}));
+    this.sphericalRamSensors = viewer.entities.add(new this.cesium.Entity({id: 'sphericalRamSensors'}));
+
     for (let rdr of this.props.radarData) {
       let { maxEl,
         minEl,
@@ -172,13 +177,13 @@ class CesiumPlot extends React.Component {
        * @return {[type]} [description]
        */
       const addRectangularSensor =() => {
-        this.airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+        const rectangularAirSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
           getSensorOptions(getModelMatrix(cone), airRange, halfAngleY, airCoverageColor));
-        viewer.scene.primitives.add(this.airSensor);
+        this.airSensor.add(rectangularAirSensor);
 
-        this.ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
+        const rectangularRamSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
           getSensorOptions(getModelMatrix(cone), ramRange, halfAngleY, ramCoverageColor));
-        viewer.scene.primitives.add(this.ramSensor);
+        this.ramSensor.add(rectangularRamSensor);
       };
 
       /**
@@ -188,9 +193,9 @@ class CesiumPlot extends React.Component {
         const sectorIncrements = cesium.Math.toRadians(45);
         const startingAngle = cone;
         let count = 0;
-        this.airSensor = new cesium.PrimitiveCollection();
-        this.ramSensor = new cesium.PrimitiveCollection();
-        for (var i = startingAngle; i < halfSector*2; i+=sectorIncrements*2) {
+        const airSensorArray = new cesium.PrimitiveCollection();
+        const ramSensorArray = new cesium.PrimitiveCollection();
+        for (var i = startingAngle; i < halfSector*2; i+=sectorIncrements+halfSector) {
           const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
             getSensorOptions(getModelMatrix(i), airRange, sectorIncrements, airCoverageColor));
           const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
@@ -198,8 +203,6 @@ class CesiumPlot extends React.Component {
           this.airSensor.add(airSensor);
           this.ramSensor.add(ramSensor);
         }
-        viewer.scene.primitives.add(this.airSensor);
-        viewer.scene.primitives.add(this.ramSensor);
       };
 
       /**
@@ -207,8 +210,9 @@ class CesiumPlot extends React.Component {
        */
       const addSphericalSensor = () => {
         // add an Air coverage sensor
-        this.airSensor = new cesium.Entity({
+        const sphericalAirSensor = new cesium.Entity({
           name: `${radarName} - Air Coverage`,
+          parent: this.sphericalAirSensors,
           position: cesium.Cartesian3.fromRadians(
             radarLon,
             radarLat,
@@ -222,8 +226,9 @@ class CesiumPlot extends React.Component {
           }
         });
 
-        this.ramSensor = new cesium.Entity({
+        const sphericalRamSensor = new cesium.Entity({
           name: `${radarName} - RAM Coverage`,
+          parent: this.sphericalRamSensors,
           position: cesium.Cartesian3.fromRadians(
             radarLon,
             radarLat,
@@ -236,23 +241,8 @@ class CesiumPlot extends React.Component {
             outlineColor: new cesium.Color(1.0, 0.54, 0.0, 1.0)
           }
         });
-
-        viewer.entities.add(this.airSensor);
-        viewer.entities.add(this.ramSensor);
-      };
-
-      const addCustomSensor = () => {
-        var customSensor = new CesiumSensorVolumes.CustomSensorVolume();
-        var directions = [];
-        for (var i = 0; i < 8; ++i) {
-          var clock = cesium.Math.toRadians(45.0 * i);
-          var cone = cesium.Math.toRadians(25.0);
-          directions.push(new cesium.Spherical(clock, cone));
-        }
-        customSensor.modelMatrix = getModelMatrix();
-        customSensor.radius = 20000000.0;
-        customSensor.directions = directions;
-        viewer.scene.primitives.add(customSensor);
+        viewer.entities.add(sphericalAirSensor);
+        viewer.entities.add(sphericalRamSensor);
       };
 
       const addLabels = () => {
@@ -280,6 +270,8 @@ class CesiumPlot extends React.Component {
         addRectangularSensorArray();
       }
     }
+    viewer.scene.primitives.add(this.ramSensor);
+    viewer.scene.primitives.add(this.airSensor);
     return;
   }
 
@@ -550,6 +542,7 @@ class CesiumPlot extends React.Component {
    */
   toggleAirSensors () {
     this.airSensor.show = !this.airSensor.show;
+    this.sphericalAirSensors.show = !this.sphericalAirSensors.show;
   }
 
   /**
@@ -557,6 +550,7 @@ class CesiumPlot extends React.Component {
    */
   toggleRamSensors () {
     this.ramSensor.show = !this.ramSensor.show;
+    this.sphericalRamSensors.show = !this.sphericalRamSensors.show;
   }
 
   /**
