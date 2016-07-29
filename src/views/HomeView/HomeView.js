@@ -3,16 +3,27 @@ import Dropzone from 'react-dropzone';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { addData } from '../../redux/modules/log-data';
+import loadingGif from './loading-icon.gif';
+// import FileSliceReader from './file-slice-reader';
+import FileSliceReader from './FileSliceReader';
 // material ui
-import CircularProgress from 'material-ui/lib/circular-progress';
+import LinearProgress from 'material-ui/lib/linear-progress';
+import Dialog from 'material-ui/lib/dialog';
+import FlatButton from 'material-ui/lib/flat-button';
 
 export class HomeView extends React.Component {
 
   constructor () {
     super();
     this.onDrop = this.onDrop.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.readFile = this.readFile.bind(this);
+    this.updateProgress = this.updateProgress.bind(this);
     this.state = {
-      uploadProgress: 0
+      uploadProgress: 0,
+      dialogOpen: false,
+      simRadars: null,
+      simTime: null
     };
   }
 
@@ -28,7 +39,11 @@ export class HomeView extends React.Component {
    * @param  {[file]} files The file uploaded by the user
    */
   onDrop (files) {
-    const self = this;
+    // show the selector dialog
+    this.setState({
+      dialogOpen: true
+    });
+
     // const { addData } = this.props;
     // const { router } = this.context;
 
@@ -45,43 +60,82 @@ export class HomeView extends React.Component {
     // fr.readAsText(files[0
 
     const file = files[0];
+    // save file reference
+    // this.file = file;
 
     console.debug(`received file: ${file.name}`);
+
+    // this.readFile();
+    // FileSliceReader(file, this.updateProgress);
+    const CHUNK_SIZE = 1024*100*0.5;
+    const fileReader = new FileSliceReader(file, CHUNK_SIZE, '\n');
+    fileReader.readLastChunk(this.updateProgress);
+  }
+
+  updateProgress (data, progress) {
+    console.debug(data);
+    this.setState({
+      uploadProgress: progress
+    });
+  }
+
+  /**
+   * Reads the entire file in chunks
+   */
+  readFile () {
+    const self = this;
+    const { file } = this;
+    console.debug(`Reading file: ${file.name}`);
+
+    // function variables
     let CHUNK_SIZE = 1024*100*5;
     let offset = 0;
     let objectCount = 0;
     let progress = 0;
+    const delimiter = '\n';
+
+    // File reader
     const fr = new FileReader();
 
     fr.onload = function () {
-      var view = fr.result;
-      let index = view.lastIndexOf('\n');
-      if (index === -1) {
+      var dataChunk = fr.result;
+      let lastCharIndex = dataChunk.lastIndexOf(delimiter);
+      if (lastCharIndex === -1) {
         console.debug('No new line character found');
-        console.debug(view);
+        console.debug(dataChunk);
         return;
       }
-      let jsonString = `[${view.substring(0, index).replace(/[,]+$/g, '')}]`;
+      let jsonString = `[${dataChunk.substring(0, lastCharIndex).replace(/[,]+$/g, '')}]`;
       let obj = JSON.parse(jsonString);
+      // do something with the json object
+
       objectCount += obj.length;
-      offset += index+1;
+      offset += lastCharIndex+1;
+
+      // update the state for the ui
       progress = Math.round((offset/file.size) * 100);
       self.setState({
         uploadProgress: progress
       });
+
       seek();
     };
 
     fr.onerror = function () {
-      // Cannot read file... Do something, e.g. assume column size = 0.
-      console.debug('Cannot read file');
+      console.debug('Error reading file =(');
     };
 
     const seek = () => {
       let nextChunk = offset + CHUNK_SIZE;
 
+      // first chunk of data
+      if (offset === 0) {
+        console.debug('First chunk of data');
+      }
+
       // approcahing end of file
-      if (nextChunk >= file.size) {
+      if (nextChunk > file.size) {
+        // adjust the final chunk size to read the remaining file contents
         CHUNK_SIZE = nextChunk-file.size;
         console.debug('Last chunk of data');
       }
@@ -93,7 +147,7 @@ export class HomeView extends React.Component {
         return;
       }
 
-      var slice = file.slice(offset, offset + CHUNK_SIZE);
+      var slice = file.slice(offset, nextChunk);
       fr.readAsText(slice);
     };
 
@@ -101,27 +155,59 @@ export class HomeView extends React.Component {
   }
 
   /**
-   * The styles for the drop zone
-   * @type {Object}
+   * Dialog close handler
    */
-  dropzoneStyle = {
-    textAlign: 'center',
-    margin: '0',
-    padding: '200px 0',
-    color: '#aaa',
-    border: '2px dashed #aaa',
-    borderRadius: '7px',
-    cursor: 'pointer',
-    flexGrow: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  };
-
+  handleClose () {
+    this.setState({
+      dialogOpen: false
+    });
+  }
   /**
    * Creates the drop zone element
    */
   render () {
+    const { uploadProgress, dialogOpen } = this.state;
+
+    /**
+     * The styles for the drop zone
+     * @type {Object}
+     */
+    const style = {
+      dropzoneStyle: {
+        textAlign: 'center',
+        margin: '0',
+        padding: '200px 0',
+        color: '#aaa',
+        border: '2px dashed #aaa',
+        borderRadius: '7px',
+        cursor: 'pointer',
+        flexGrow: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      },
+      loadingStyle: {
+        height: '100%',
+        width: '100%',
+        backgroundColor: '#fff',
+        padding: '100px'
+      }
+    };
+
+    const actions = [
+      <FlatButton
+        label="Cancel"
+        secondary
+        onTouchTap={this.handleClose}
+      />,
+      <FlatButton
+        label="Submit"
+        primary
+        disabled
+        onTouchTap={this.handleClose}
+      />
+    ];
+
     return (
       <div
         style={{
@@ -130,13 +216,25 @@ export class HomeView extends React.Component {
           height: 'calc(100vh - 88px)'
         }}
       >
-        <CircularProgress mode="determinate" value={this.state.uploadProgress} size={2}/>
-        <Dropzone onDrop={this.onDrop} style={this.dropzoneStyle}>
+        <Dropzone onDrop={this.onDrop} style={style.dropzoneStyle}>
           <div id={'dropContent'} style={{ textAlign: 'center' }}>
             <h3>Drag and drop log file here</h3>
             <h5>Or click to browse for log file</h5>
           </div>
         </Dropzone>
+        <Dialog
+          title="Dialog With Actions"
+          actions={actions}
+          modal
+          open={dialogOpen}
+        >
+          <div style={style.loadingStyle}>
+            <img src={loadingGif} />
+            <div>
+              <LinearProgress mode="determinate" color='#00BCD4' value={uploadProgress} size={2}/>
+            </div>
+          </div>
+        </Dialog>
       </div>
     );
   }
