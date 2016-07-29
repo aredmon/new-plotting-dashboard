@@ -3,13 +3,17 @@ import Dropzone from 'react-dropzone';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { addData } from '../../redux/modules/log-data';
-import loadingGif from './loading-icon.gif';
+// import loadingGif from './loading-icon.gif';
 // import FileSliceReader from './file-slice-reader';
 import FileSliceReader from './FileSliceReader';
+import _ from 'lodash';
 // material ui
-import LinearProgress from 'material-ui/lib/linear-progress';
+// import LinearProgress from 'material-ui/lib/linear-progress';
 import Dialog from 'material-ui/lib/dialog';
 import FlatButton from 'material-ui/lib/flat-button';
+import Checkbox from 'material-ui/lib/checkbox';
+import SelectField from 'material-ui/lib/SelectField';
+import MenuItem from 'material-ui/lib/menus/menu-item';
 
 export class HomeView extends React.Component {
 
@@ -17,13 +21,15 @@ export class HomeView extends React.Component {
     super();
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
-    this.readFile = this.readFile.bind(this);
     this.updateProgress = this.updateProgress.bind(this);
+    this.updateMaxTime = this.updateMaxTime.bind(this);
+    this.updateRadars = this.updateRadars.bind(this);
     this.state = {
       uploadProgress: 0,
       dialogOpen: false,
       simRadars: null,
-      simTime: null
+      simTimes: null,
+      fileName: null
     };
   }
 
@@ -39,10 +45,25 @@ export class HomeView extends React.Component {
    * @param  {[file]} files The file uploaded by the user
    */
   onDrop (files) {
+    const file = files[0];
+
     // show the selector dialog
     this.setState({
-      dialogOpen: true
+      dialogOpen: true,
+      uploadProgress: 0,
+      fileName: file.name
     });
+
+    // Instantiate file slice reader
+    const CHUNK_SIZE = 1024 * 100 * 0.5;
+
+    // Read the first chunk to get the radar data
+    const firstSliceReader = new FileSliceReader(file, CHUNK_SIZE, '\n');
+    firstSliceReader.readFirstChunk(this.updateRadars);
+
+    // read the last chunk to find the max time of the sim
+    const lastSliceReader = new FileSliceReader(file, CHUNK_SIZE, '\n');
+    lastSliceReader.readLastChunk(this.updateMaxTime);
 
     // const { addData } = this.props;
     // const { router } = this.context;
@@ -57,101 +78,53 @@ export class HomeView extends React.Component {
     //   }
     //   console.debug()
     // });
-    // fr.readAsText(files[0
-
-    const file = files[0];
-    // save file reference
-    // this.file = file;
-
-    console.debug(`received file: ${file.name}`);
-
-    // this.readFile();
-    // FileSliceReader(file, this.updateProgress);
-    const CHUNK_SIZE = 1024*100*0.5;
-    const fileReader = new FileSliceReader(file, CHUNK_SIZE, '\n');
-    fileReader.readLastChunk(this.updateProgress);
   }
 
   updateProgress (data, progress) {
-    console.debug(data);
+    console.debug(progress);
     this.setState({
       uploadProgress: progress
     });
   }
 
   /**
-   * Reads the entire file in chunks
+   * This callback finds radarInit messages and the max time in a data set
+   *
+   * @param  {Object} data a well formed JSON array of objects
    */
-  readFile () {
-    const self = this;
-    const { file } = this;
-    console.debug(`Reading file: ${file.name}`);
+  updateRadars (data) {
+    let radars = [];
 
-    // function variables
-    let CHUNK_SIZE = 1024*100*5;
-    let offset = 0;
-    let objectCount = 0;
-    let progress = 0;
-    const delimiter = '\n';
-
-    // File reader
-    const fr = new FileReader();
-
-    fr.onload = function () {
-      var dataChunk = fr.result;
-      let lastCharIndex = dataChunk.lastIndexOf(delimiter);
-      if (lastCharIndex === -1) {
-        console.debug('No new line character found');
-        console.debug(dataChunk);
-        return;
+    _(data).forEach((row) => {
+      if (_.get(row, 'type') === 'radarInit') {
+        radars.push(row);
       }
-      let jsonString = `[${dataChunk.substring(0, lastCharIndex).replace(/[,]+$/g, '')}]`;
-      let obj = JSON.parse(jsonString);
-      // do something with the json object
+    });
 
-      objectCount += obj.length;
-      offset += lastCharIndex+1;
+    this.setState({
+      simRadars: radars
+    });
+  }
 
-      // update the state for the ui
-      progress = Math.round((offset/file.size) * 100);
-      self.setState({
-        uploadProgress: progress
-      });
+  /**
+   * This callback finds radarInit messages and the max time in a data set
+   *
+   * @param  {Object} data a well formed JSON array of objects
+   */
+  updateMaxTime (data) {
+    let tMax = 0;
 
-      seek();
-    };
+    _.map(data, (row) => {
+      tMax = _.get(row, 't_valid') > tMax ? _.get(row, 't_valid') : tMax;
+    });
+    console.debug(tMax);
 
-    fr.onerror = function () {
-      console.debug('Error reading file =(');
-    };
-
-    const seek = () => {
-      let nextChunk = offset + CHUNK_SIZE;
-
-      // first chunk of data
-      if (offset === 0) {
-        console.debug('First chunk of data');
+    this.setState({
+      simTimes: {
+        min: 0,
+        max: tMax
       }
-
-      // approcahing end of file
-      if (nextChunk > file.size) {
-        // adjust the final chunk size to read the remaining file contents
-        CHUNK_SIZE = nextChunk-file.size;
-        console.debug('Last chunk of data');
-      }
-
-      // reached end of file
-      if (offset >= file.size) {
-        console.debug('End of file');
-        console.debug(`Object count: ${objectCount}`);
-        return;
-      }
-
-      var slice = file.slice(offset, nextChunk);
-      fr.readAsText(slice);
-    };
-
-    seek();
+    });
   }
 
   /**
@@ -166,13 +139,13 @@ export class HomeView extends React.Component {
    * Creates the drop zone element
    */
   render () {
-    const { uploadProgress, dialogOpen } = this.state;
-
+    const { dialogOpen, fileName, simRadars, simTimes } = this.state;
+    const scenarioTimeIncrement = 200;
     /**
      * The styles for the drop zone
      * @type {Object}
      */
-    const style = {
+    const styles = {
       dropzoneStyle: {
         textAlign: 'center',
         margin: '0',
@@ -190,7 +163,10 @@ export class HomeView extends React.Component {
         height: '100%',
         width: '100%',
         backgroundColor: '#fff',
-        padding: '100px'
+        padding: '20px'
+      },
+      checkbox: {
+        marginBottom: '16px'
       }
     };
 
@@ -203,10 +179,14 @@ export class HomeView extends React.Component {
       <FlatButton
         label="Submit"
         primary
-        disabled
         onTouchTap={this.handleClose}
       />
     ];
+
+    const items = [];
+    for (let i = simTimes.min; i < simTimes.max; i+=scenarioTimeIncrement) {
+      items.push(<MenuItem value={i} key={i} primaryText={`Item ${i}`}/>);
+    }
 
     return (
       <div
@@ -216,23 +196,28 @@ export class HomeView extends React.Component {
           height: 'calc(100vh - 88px)'
         }}
       >
-        <Dropzone onDrop={this.onDrop} style={style.dropzoneStyle}>
+        <Dropzone onDrop={this.onDrop} style={styles.dropzoneStyle}>
           <div id={'dropContent'} style={{ textAlign: 'center' }}>
             <h3>Drag and drop log file here</h3>
             <h5>Or click to browse for log file</h5>
           </div>
         </Dropzone>
         <Dialog
-          title="Dialog With Actions"
+          title={`File Name: ${fileName}`}
           actions={actions}
           modal
           open={dialogOpen}
         >
-          <div style={style.loadingStyle}>
-            <img src={loadingGif} />
-            <div>
-              <LinearProgress mode="determinate" color='#00BCD4' value={uploadProgress} size={2}/>
-            </div>
+          <div style={styles.loadingStyle}>
+            <h3>Radars</h3>
+              {_.map(simRadars, (row) => {
+                const { modelId, radarName } = row;
+                const label = `Radar ${modelId}: ${radarName}`;
+                return <Checkbox label={label} style={styles.checkbox} key={modelId}/>;
+              })}
+            <SelectField maxHeight={300} value={this.state.value} onChange={this.handleChange}>
+              {items}
+            </SelectField>
           </div>
         </Dialog>
       </div>

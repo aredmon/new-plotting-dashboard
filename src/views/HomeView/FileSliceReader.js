@@ -20,6 +20,9 @@ class FileSliceReader {
     };
   }
 
+  /**
+   * Sets the initial values to the defaults
+   */
   _setDefaults () {
     const { chunkSize, offset, objectCount, progress, chunksRead, delimiter } = this.defaults;
     this.chunkSize = chunkSize;
@@ -36,14 +39,13 @@ class FileSliceReader {
     };
   }
 
+  /**
+   * Method to read a slice of a file
+   *
+   */
   _seek () {
     const { file, offset, fr } = this;
     let nextChunk = this.offset + this.chunkSize;
-
-    // first chunk of data
-    if (offset === 0) {
-      console.debug('First chunk of data');
-    }
 
     // approcahing end of file
     if (nextChunk > file.size) {
@@ -64,9 +66,13 @@ class FileSliceReader {
     fr.readAsText(slice);
   }
 
+  /**
+   * Internal method to process a slice of data from the FileReader
+   *
+   * @param  {Function} callback The function to call after the slice is processed
+   */
   _readChunk (callback) {
     const { file, fr, delimiter } = this;
-    let { objectCount, offset, chunksRead, progress } = this;
 
     var dataChunk = fr.result;
     let lastCharIndex = this.readReverse ? dataChunk.indexOf(delimiter)+1 : dataChunk.lastIndexOf(delimiter);
@@ -82,15 +88,21 @@ class FileSliceReader {
     let dataObject = JSON.parse(jsonString);
 
     // update the state for the ui
-    progress = Math.round((offset/file.size) * 100);
-    callback(dataObject, progress);
+    this.progress = Math.ceil((this.offset/file.size) * 100);
+    callback(dataObject, this.progress);
 
     // update bookkeeping values
-    objectCount += dataObject.length;
-    offset += lastCharIndex+1;
-    chunksRead += 1;
+    this.objectCount += dataObject.length;
+    this.offset += lastCharIndex+1;
+    this.chunksRead += 1;
   }
 
+  /**
+   * Read an entire file slice by slice, calling the callback after each slice
+   * is read
+   * @param  {Function} callback The function to call after each slice is processed.
+   *                             The callback is given (data, progress)
+   */
   readFile (callback) {
     console.debug('reading entire file slice by slice');
     this._setDefaults();
@@ -101,6 +113,12 @@ class FileSliceReader {
     this._seek();
   }
 
+  /**
+   * Read the first slice of a file, calling the callback after the slice is read
+   *
+   * @param  {Function} callback The function to call after each slice is processed.
+   *                             The callback is given (data, progress)
+   */
   readFirstChunk (callback) {
     console.debug('reading first file chunk');
     this._setDefaults();
@@ -110,6 +128,12 @@ class FileSliceReader {
     this._seek();
   }
 
+  /**
+   * Read the last slice of a file, calling the callback after the slice is read
+   *
+   * @param  {Function} callback The function to call after each slice is processed.
+   *                             The callback is given (data, progress)
+   */
   readLastChunk (callback) {
     console.debug('reading last file chunk');
     this._setDefaults();
