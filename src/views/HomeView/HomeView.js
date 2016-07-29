@@ -139,7 +139,7 @@ export class HomeView extends React.Component {
    * Creates the drop zone element
    */
   render () {
-    const { dialogOpen, fileName, simRadars, simTimes } = this.state;
+    const { dialogOpen, fileName, simRadars } = this.state;
     const scenarioTimeIncrement = 200;
     /**
      * The styles for the drop zone
@@ -184,7 +184,7 @@ export class HomeView extends React.Component {
     ];
 
     const items = [];
-    for (let i = simTimes.min; i < simTimes.max; i+=scenarioTimeIncrement) {
+    for (let i = 0; i < 700; i+=scenarioTimeIncrement) {
       items.push(<MenuItem value={i} key={i} primaryText={`Item ${i}`}/>);
     }
 
