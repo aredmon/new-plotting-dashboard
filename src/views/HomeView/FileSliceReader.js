@@ -88,7 +88,7 @@ class FileSliceReader {
     let dataObject = JSON.parse(jsonString);
 
     // update the state for the ui
-    this.progress = Math.ceil((this.offset/file.size) * 100);
+    this.progress = Math.round((this.offset/file.size) * 100);
     callback(dataObject, this.progress);
 
     // update bookkeeping values

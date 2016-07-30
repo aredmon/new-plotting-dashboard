@@ -3,17 +3,15 @@ import Dropzone from 'react-dropzone';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { addData } from '../../redux/modules/log-data';
-// import loadingGif from './loading-icon.gif';
-// import FileSliceReader from './file-slice-reader';
 import FileSliceReader from './FileSliceReader';
 import _ from 'lodash';
 // material ui
-// import LinearProgress from 'material-ui/lib/linear-progress';
 import Dialog from 'material-ui/lib/dialog';
 import FlatButton from 'material-ui/lib/flat-button';
 import Checkbox from 'material-ui/lib/checkbox';
 import SelectField from 'material-ui/lib/SelectField';
 import MenuItem from 'material-ui/lib/menus/menu-item';
+import LinearProgress from 'material-ui/lib/linear-progress';
 
 export class HomeView extends React.Component {
 
@@ -21,14 +19,22 @@ export class HomeView extends React.Component {
     super();
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
+    this.handleSubmit= this.handleSubmit.bind(this);
+    this.handleRadarCheckbox= this.handleRadarCheckbox.bind(this);
     this.updateProgress = this.updateProgress.bind(this);
-    this.updateMaxTime = this.updateMaxTime.bind(this);
-    this.updateRadars = this.updateRadars.bind(this);
+    this.loadMaxTime = this.loadMaxTime.bind(this);
+    this.loadRadars = this.loadRadars.bind(this);
+    this.handleSelectTime = this.handleSelectTime.bind(this);
     this.state = {
       uploadProgress: 0,
       dialogOpen: false,
+      dialogLoading: false,
       simRadars: null,
-      simTimes: null,
+      simTimes: {
+        min: 0,
+        max: 0
+      },
+      filteredRadars: [],
       fileName: null
     };
   }
@@ -46,6 +52,10 @@ export class HomeView extends React.Component {
    */
   onDrop (files) {
     const file = files[0];
+    this.file = {
+      fileRef: file,
+      chunkSize: 1024 * 100 * 0.5
+    };
 
     // show the selector dialog
     this.setState({
@@ -54,16 +64,9 @@ export class HomeView extends React.Component {
       fileName: file.name
     });
 
-    // Instantiate file slice reader
-    const CHUNK_SIZE = 1024 * 100 * 0.5;
-
     // Read the first chunk to get the radar data
-    const firstSliceReader = new FileSliceReader(file, CHUNK_SIZE, '\n');
-    firstSliceReader.readFirstChunk(this.updateRadars);
-
-    // read the last chunk to find the max time of the sim
-    const lastSliceReader = new FileSliceReader(file, CHUNK_SIZE, '\n');
-    lastSliceReader.readLastChunk(this.updateMaxTime);
+    const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
+    firstSliceReader.readFirstChunk(this.loadRadars);
 
     // const { addData } = this.props;
     // const { router } = this.context;
@@ -80,11 +83,19 @@ export class HomeView extends React.Component {
     // });
   }
 
+  /**
+   * Data loading progress handler
+   * @param  {Object} data     The parsed data
+   * @param  {Number} progress The progress of the file reading
+   */
   updateProgress (data, progress) {
-    console.debug(progress);
-    this.setState({
+    let stateUpdate = {
       uploadProgress: progress
-    });
+    };
+    if (progress > 99.9) {
+      stateUpdate = Object.assign({dialogLoading: false}, stateUpdate);
+    }
+    this.setState(stateUpdate);
   }
 
   /**
@@ -92,7 +103,7 @@ export class HomeView extends React.Component {
    *
    * @param  {Object} data a well formed JSON array of objects
    */
-  updateRadars (data) {
+  loadRadars (data) {
     let radars = [];
 
     _(data).forEach((row) => {
@@ -104,6 +115,10 @@ export class HomeView extends React.Component {
     this.setState({
       simRadars: radars
     });
+
+    // read the last chunk to find the max time of the sim
+    const lastSliceReader = new FileSliceReader(this.file.fileRef, this.file.chunkSize, '\n');
+    lastSliceReader.readLastChunk(this.loadMaxTime);
   }
 
   /**
@@ -111,7 +126,7 @@ export class HomeView extends React.Component {
    *
    * @param  {Object} data a well formed JSON array of objects
    */
-  updateMaxTime (data) {
+  loadMaxTime (data) {
     let tMax = 0;
 
     _.map(data, (row) => {
@@ -128,18 +143,68 @@ export class HomeView extends React.Component {
   }
 
   /**
+   * Dialog submit handler
+   */
+  handleSubmit () {
+    this.setState({
+      dialogOpen: false,
+      dialogLoading: true
+    });
+
+    // Read the first chunk to get the radar data
+    const fileReader = new FileSliceReader(this.file.fileRef, this.file.chunkSize, '\n');
+    fileReader.readFile(this.updateProgress);
+  }
+
+  /**
    * Dialog close handler
    */
   handleClose () {
     this.setState({
-      dialogOpen: false
+      dialogOpen: false,
+      dialogLoading: false
+    });
+  }
+
+  /**
+   * [handleSelectTime description]
+   * @param  {[type]} event [description]
+   * @param  {[type]} index [description]
+   * @param  {[type]} value [description]
+   */
+  handleSelectTime (event, index, value) {
+    this.setState({
+      selectTime: value
+    });
+  }
+
+  /**
+   * [handleRadarCheckbox description]
+   * @param  {[type]} event   [description]
+   * @param  {[type]} checked [description]
+   * @return {[type]}         [description]
+   */
+  handleRadarCheckbox (event, checked) {
+    const { filteredRadars } = this.state;
+    const radarName = event.target.name;
+    console.debug(event.target.name, checked);
+    const radarPosition = filteredRadars.indexOf(radarName);
+    if (checked) {
+      if (radarPosition === -1) {
+        filteredRadars.push(radarName);
+      }
+    } else {
+      filteredRadars.splice(radarPosition, 1);
+    }
+    this.setState({
+      filteredRadars: filteredRadars
     });
   }
   /**
    * Creates the drop zone element
    */
   render () {
-    const { dialogOpen, fileName, simRadars } = this.state;
+    const { dialogOpen, fileName, simRadars, simTimes, selectTime, dialogLoading } = this.state;
     const scenarioTimeIncrement = 200;
     /**
      * The styles for the drop zone
@@ -163,10 +228,16 @@ export class HomeView extends React.Component {
         height: '100%',
         width: '100%',
         backgroundColor: '#fff',
-        padding: '20px'
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'row'
       },
       checkbox: {
         marginBottom: '16px'
+      },
+      block: {
+        maxWidth: '350px',
+        minWidth: '250px'
       }
     };
 
@@ -179,13 +250,13 @@ export class HomeView extends React.Component {
       <FlatButton
         label="Submit"
         primary
-        onTouchTap={this.handleClose}
+        onTouchTap={this.handleSubmit}
       />
     ];
 
     const items = [];
-    for (let i = 0; i < 700; i+=scenarioTimeIncrement) {
-      items.push(<MenuItem value={i} key={i} primaryText={`Item ${i}`}/>);
+    for (let i = 0; i < simTimes.max; i+=scenarioTimeIncrement) {
+      items.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+scenarioTimeIncrement}`}/>);
     }
 
     return (
@@ -209,15 +280,41 @@ export class HomeView extends React.Component {
           open={dialogOpen}
         >
           <div style={styles.loadingStyle}>
-            <h3>Radars</h3>
-              {_.map(simRadars, (row) => {
-                const { modelId, radarName } = row;
-                const label = `Radar ${modelId}: ${radarName}`;
-                return <Checkbox label={label} style={styles.checkbox} key={modelId}/>;
-              })}
-            <SelectField maxHeight={300} value={this.state.value} onChange={this.handleChange}>
-              {items}
-            </SelectField>
+            <div style={styles.block}>
+              <h3>Radars</h3>
+                {_.map(simRadars, (row) => {
+                  const { modelId, radarName } = row;
+                  const label = `Radar ${modelId}: ${radarName}`;
+                  return <Checkbox
+                    label={label}
+                    style={styles.checkbox}
+                    key={modelId}
+                    value={radarName}
+                    name={radarName}
+                    onCheck={this.handleRadarCheckbox}/>;
+                })}
+            </div>
+            <div style={styles.block}>
+              <SelectField
+                maxHeight={300}
+                value={selectTime}
+                onChange={this.handleSelectTime}
+                floatingLabelText="Select time range"
+              >
+                {items}
+              </SelectField>
+            </div>
+          </div>
+        </Dialog>
+        <Dialog
+          title={'Loading Data'}
+          modal={false}
+          open={dialogLoading}
+          onRequestClose={this.handleClose}
+        >
+          <div style={{textAlign: 'center'}}>
+            <h2>{this.state.uploadProgress} %</h2>
+            <LinearProgress mode="determinate" color='#00BCD4' value={this.state.uploadProgress} />
           </div>
         </Dialog>
       </div>
