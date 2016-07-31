@@ -5,6 +5,7 @@ import { bindActionCreators } from 'redux';
 import { addData } from '../../redux/modules/log-data';
 import FileSliceReader from './FileSliceReader';
 import _ from 'lodash';
+import loadingGif from './ajax-loader.gif';
 // material ui
 import Dialog from 'material-ui/lib/dialog';
 import FlatButton from 'material-ui/lib/flat-button';
@@ -57,7 +58,7 @@ export class HomeView extends React.Component {
     const file = files[0];
     this.file = {
       fileRef: file,
-      chunkSize: 1024 * 100 * 0.5
+      chunkSize: 1024 * 100 * 5
     };
 
     // show the selector dialog
@@ -70,15 +71,6 @@ export class HomeView extends React.Component {
     // Read the first chunk to get the radar data
     const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
     firstSliceReader.readFirstChunk(this.loadRadars);
-
-    // file reader to parse input file
-    // const fr = new FileReader();
-    // fr.addEventListener('load', function (e) {
-    //   const logData = `[${e.target.result.replace(/[,]\s+$/g, '')}]`;
-    //   addData(JSON.parse(logData));
-
-    //   console.debug()
-    // });
   }
 
   /**
@@ -108,7 +100,7 @@ export class HomeView extends React.Component {
 
       // Get track objects for the selected radars
       if (tValid && type === 'track' &&
-        filteredRadars.indexOf(_.get(row, 'modelId')) >= 0) {
+        filteredRadars.indexOf(_.get(row, 'radar_id')) >= 0) {
         this.simData.push(row);
       }
     });
@@ -132,6 +124,7 @@ export class HomeView extends React.Component {
     const { addData } = this.props;
     const { router } = this.context;
     console.debug('Upload complete');
+    console.debug(`Number of entries: ${this.simData.length}`);
     // add data to redux store
     addData(this.simData);
     // redirect to summary view
@@ -247,7 +240,14 @@ export class HomeView extends React.Component {
    * Creates the drop zone element
    */
   render () {
-    const { dialogOpen, fileName, simRadars, simTimes, selectTime, dialogLoading } = this.state;
+    const { dialogOpen,
+      fileName,
+      simRadars,
+      simTimes,
+      selectTime,
+      dialogLoading,
+      uploadProgress } = this.state;
+
     /**
      * The styles for the drop zone
      * @type {Object}
@@ -283,6 +283,10 @@ export class HomeView extends React.Component {
       }
     };
 
+    /**
+     * Actions for the dialog to select sim settings
+     * @type {Array}
+     */
     const actions = [
       <FlatButton
         label="Cancel"
@@ -355,8 +359,11 @@ export class HomeView extends React.Component {
           onRequestClose={this.handleClose}
         >
           <div style={{textAlign: 'center'}}>
-            <h2>{this.state.uploadProgress} %</h2>
-            <LinearProgress mode="determinate" color='#00BCD4' value={this.state.uploadProgress} />
+            <div style={{float: 'right', marginTop: '-30px'}}>
+              <img src={loadingGif} />
+            </div>
+            <h2>{uploadProgress} %</h2>
+            <LinearProgress mode="determinate" color='#00BCD4' value={uploadProgress} />
           </div>
         </Dialog>
       </div>

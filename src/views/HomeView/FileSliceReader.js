@@ -105,7 +105,7 @@ class FileSliceReader {
    *                             The callback is given (data, progress)
    */
   readFile (callback) {
-    console.debug('reading entire file slice by slice');
+    console.debug('reading file');
     this._setDefaults();
     this.fr.onload = () => {
       this._readChunk(callback);
