@@ -17,14 +17,17 @@ export class HomeView extends React.Component {
 
   constructor () {
     super();
+    this.simData = [];
+    this.scenarioTimeIncrement = 200;
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleSubmit= this.handleSubmit.bind(this);
+    this.handleSelectTime = this.handleSelectTime.bind(this);
     this.handleRadarCheckbox= this.handleRadarCheckbox.bind(this);
-    this.updateProgress = this.updateProgress.bind(this);
+    this.loadSimData = this.loadSimData.bind(this);
     this.loadMaxTime = this.loadMaxTime.bind(this);
     this.loadRadars = this.loadRadars.bind(this);
-    this.handleSelectTime = this.handleSelectTime.bind(this);
+    this.uploadComplete = this.uploadComplete.bind(this);
     this.state = {
       uploadProgress: 0,
       dialogOpen: false,
@@ -68,17 +71,12 @@ export class HomeView extends React.Component {
     const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
     firstSliceReader.readFirstChunk(this.loadRadars);
 
-    // const { addData } = this.props;
-    // const { router } = this.context;
-
     // file reader to parse input file
     // const fr = new FileReader();
     // fr.addEventListener('load', function (e) {
     //   const logData = `[${e.target.result.replace(/[,]\s+$/g, '')}]`;
     //   addData(JSON.parse(logData));
-    //   if (router) {
-    //     router.push('/summary');
-    //   }
+
     //   console.debug()
     // });
   }
@@ -88,14 +86,58 @@ export class HomeView extends React.Component {
    * @param  {Object} data     The parsed data
    * @param  {Number} progress The progress of the file reading
    */
-  updateProgress (data, progress) {
-    let stateUpdate = {
+  loadSimData (data, progress, finished) {
+    const { filteredRadars, selectTime } = this.state;
+    const tMin = selectTime;
+    const tMax = tMin+this.scenarioTimeIncrement;
+    // process data
+    _(data).forEach((row) => {
+      // check if the time is within the filtered time range
+      const tValid = _.get(row, 't_valid') >= tMin && _.get(row, 't_valid') <= tMax;
+      const type = _.get(row, 'type');
+      // Get radar init objects for the selected radars
+      if (type === 'radarInit' && filteredRadars.indexOf(_.get(row, 'modelId')) >= 0) {
+        this.simData.push(row);
+      }
+
+      // Get truth onjects for the first radar. no need to get truth for every radar
+      if (tValid && type === 'truth' &&
+          _.get(row, 'radar_id') === filteredRadars[0]) {
+        this.simData.push(row);
+      }
+
+      // Get track objects for the selected radars
+      if (tValid && type === 'track' &&
+        filteredRadars.indexOf(_.get(row, 'modelId')) >= 0) {
+        this.simData.push(row);
+      }
+    });
+
+    // update the ui
+    this.setState({
       uploadProgress: progress
-    };
-    if (progress > 99.9) {
-      stateUpdate = Object.assign({dialogLoading: false}, stateUpdate);
+    });
+
+    // data is finished loading
+    if (finished) {
+      this.setState({
+        dialogLoading: false
+      });
+      // send data to redux
+      this.uploadComplete();
     }
-    this.setState(stateUpdate);
+  }
+
+  uploadComplete () {
+    const { addData } = this.props;
+    const { router } = this.context;
+    console.debug('Upload complete');
+    // add data to redux store
+    addData(this.simData);
+    // redirect to summary view
+    if (router) {
+      router.push('/summary');
+    }
   }
 
   /**
@@ -132,7 +174,6 @@ export class HomeView extends React.Component {
     _.map(data, (row) => {
       tMax = _.get(row, 't_valid') > tMax ? _.get(row, 't_valid') : tMax;
     });
-    console.debug(tMax);
 
     this.setState({
       simTimes: {
@@ -153,7 +194,7 @@ export class HomeView extends React.Component {
 
     // Read the first chunk to get the radar data
     const fileReader = new FileSliceReader(this.file.fileRef, this.file.chunkSize, '\n');
-    fileReader.readFile(this.updateProgress);
+    fileReader.readFile(this.loadSimData);
   }
 
   /**
@@ -173,25 +214,27 @@ export class HomeView extends React.Component {
    * @param  {[type]} value [description]
    */
   handleSelectTime (event, index, value) {
+    console.debug(`${value} - ${value+this.scenarioTimeIncrement}`);
     this.setState({
       selectTime: value
     });
   }
 
   /**
-   * [handleRadarCheckbox description]
-   * @param  {[type]} event   [description]
-   * @param  {[type]} checked [description]
-   * @return {[type]}         [description]
+   * Check event listener for the radar checkbox. IF the radar is checked
+   * the radar id is added to the list of radar ids for data filtering. If
+   * the radar is unchecked it is removed from the list
+   * @param  {Object} event   the checkbox event
+   * @param  {Boolean} checked whether the checkbox is checked or not
    */
   handleRadarCheckbox (event, checked) {
     const { filteredRadars } = this.state;
-    const radarName = event.target.name;
-    console.debug(event.target.name, checked);
-    const radarPosition = filteredRadars.indexOf(radarName);
+    const radarId = parseInt(event.target.value);
+    console.debug(radarId);
+    const radarPosition = filteredRadars.indexOf(radarId);
     if (checked) {
       if (radarPosition === -1) {
-        filteredRadars.push(radarName);
+        filteredRadars.push(radarId);
       }
     } else {
       filteredRadars.splice(radarPosition, 1);
@@ -205,7 +248,6 @@ export class HomeView extends React.Component {
    */
   render () {
     const { dialogOpen, fileName, simRadars, simTimes, selectTime, dialogLoading } = this.state;
-    const scenarioTimeIncrement = 200;
     /**
      * The styles for the drop zone
      * @type {Object}
@@ -254,9 +296,9 @@ export class HomeView extends React.Component {
       />
     ];
 
-    const items = [];
-    for (let i = 0; i < simTimes.max; i+=scenarioTimeIncrement) {
-      items.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+scenarioTimeIncrement}`}/>);
+    const times = [];
+    for (let i = 0; i < simTimes.max; i+=this.scenarioTimeIncrement) {
+      times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+this.scenarioTimeIncrement}`}/>);
     }
 
     return (
@@ -289,7 +331,7 @@ export class HomeView extends React.Component {
                     label={label}
                     style={styles.checkbox}
                     key={modelId}
-                    value={radarName}
+                    value={`${modelId}`}
                     name={radarName}
                     onCheck={this.handleRadarCheckbox}/>;
                 })}
@@ -301,7 +343,7 @@ export class HomeView extends React.Component {
                 onChange={this.handleSelectTime}
                 floatingLabelText="Select time range"
               >
-                {items}
+                {times}
               </SelectField>
             </div>
           </div>

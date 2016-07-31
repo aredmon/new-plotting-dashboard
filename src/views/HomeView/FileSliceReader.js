@@ -43,7 +43,7 @@ class FileSliceReader {
    * Method to read a slice of a file
    *
    */
-  _seek () {
+  _seek (callback) {
     const { file, offset, fr } = this;
     let nextChunk = this.offset + this.chunkSize;
 
@@ -59,6 +59,7 @@ class FileSliceReader {
       console.debug('End of file');
       console.debug(`Object count: ${this.objectCount}`);
       console.debug(`Chunks Read: ${this.chunksRead}`);
+      callback({}, 100, true);
       return;
     }
 
@@ -108,9 +109,9 @@ class FileSliceReader {
     this._setDefaults();
     this.fr.onload = () => {
       this._readChunk(callback);
-      this._seek();
+      this._seek(callback);
     };
-    this._seek();
+    this._seek(callback);
   }
 
   /**
