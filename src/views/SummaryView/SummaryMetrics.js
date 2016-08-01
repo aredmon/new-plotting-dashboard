@@ -10,34 +10,25 @@ const getSummaryMetrics = (data) => {
   let radars = new Set();
 
   data.forEach((row) => {
-    if (row.has('id')) {
-      ids = ids.add(row.get('id'));
+    const objType = row.get('objType') || row.get('objectType');
+
+    // keep list of ids
+    ids = ids.add(row.get('id'));
+
+    // get radar inits
+    if (row.get('type') === 'radarInit') {
+      radars = radars.add(row.get('radarId'));
     }
-    if (row.has('type')) {
-      if (row.get('type') === 'radarInit') {
-        radars = radars.add(row.get('radarId'));
-      }
-      // else if (row.get('type') === 'track') {
-      //   if (row.has('isRAM')) {
-      //     if (row.get('isRAM') === 'true') {
-      //       ramThreats = ramThreats.add(row.get('id'));
-      //     } else {
-      //       airThreats = airThreats.add(row.get('id'));
-      //     }
-      //   }
-      // }
-      // console.debug('redmon test 5');
-      types = types.add(row.get('type'));
-    }
-    if (row.has('objType')) {
-      if (row.get('objType') === 'AIRBREATHER') {
-        airThreats = airThreats.add(row.get('id'));
-      } else if (row.get('objType') === 'BALLISTIC') {
-        ramThreats = ramThreats.add(row.get('id'));
-      }
+    types = types.add(row.get('type'));
+
+    // get ram and air
+    if (objType === 'AIRBREATHER') {
+      airThreats = airThreats.add(row.get('id'));
+    } else if (objType === 'BALLISTIC') {
+      ramThreats = ramThreats.add(row.get('id'));
     }
   });
-  console.debug(radars);
+
   return ({
     trackIds: ids.sort(),
     airThreats: airThreats,

@@ -66,6 +66,7 @@
   "author": "Kevin Kanzelmeyer",
   "license": "UNLICENSED",
   "dependencies": {
+    "async-task": "^0.4.2",
     "babel-cli": "^6.5.1",
     "babel-core": "^6.3.17",
     "babel-eslint": "^6.0.5",
@@ -129,6 +130,7 @@
     "koa-convert": "^1.2.0",
     "koa-proxy": "^0.4.1",
     "koa-static": "^2.0.0",
+    "line-navigator": "^1.0.2",
     "lodash": "^4.7.0",
     "material-ui": "^0.14.4",
     "mocha": "^2.2.5",

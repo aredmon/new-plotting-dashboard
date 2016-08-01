@@ -73,9 +73,6 @@ class CesiumPlot extends React.Component {
     this.viewer.scene.globe.depthTestAgainstTerrain = true;
     this.viewer.flyTo(this.viewer.entities);
     this.toggleAirSensors();
-
-    // add toolbar buttons
-    // this.addToolbarButton('RAM Tracks', this.toggleRamTracks);
   }
 
   clearScene () {
@@ -90,7 +87,7 @@ class CesiumPlot extends React.Component {
     this.ramSensor = new cesium.PrimitiveCollection();
     this.sphericalAirSensors = viewer.entities.add(new cesium.Entity({id: 'sphericalAirSensors'}));
     this.sphericalRamSensors = viewer.entities.add(new cesium.Entity({id: 'sphericalRamSensors'}));
-
+    const { radarData } = this.props;
     for (let rdr of this.props.radarData) {
       let { maxEl,
         minEl,
@@ -179,10 +176,12 @@ class CesiumPlot extends React.Component {
       const addRectangularSensor =() => {
         const rectangularAirSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
           getSensorOptions(getModelMatrix(cone), airRange, halfAngleY, airCoverageColor));
+        console.debug('adding rectangular air sensor');
         this.airSensor.add(rectangularAirSensor);
 
         const rectangularRamSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
           getSensorOptions(getModelMatrix(cone), ramRange, halfAngleY, ramCoverageColor));
+        console.debug('adding rectangular ram sensor');
         this.ramSensor.add(rectangularRamSensor);
       };
 
@@ -276,6 +275,7 @@ class CesiumPlot extends React.Component {
   }
 
   drawThreats () {
+    console.debug('drawing threats');
     const { data } = this.props;
     const { cesium, viewer } = this;
     let ramTruthMap = {};

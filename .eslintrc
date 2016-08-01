@@ -17,7 +17,8 @@
     "__DEBUG__"    : false,
     "__DEBUG_NEW_WINDOW__" : false,
     "__API_URL__" : false,
-    "__BASENAME__" : false
+    "__BASENAME__" : false,
+    "FileNavigator" : true
   },
   "rules": {
     "semi" : [2, "always"],
