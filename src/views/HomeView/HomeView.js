@@ -289,12 +289,12 @@ export class HomeView extends React.Component {
      */
     const actions = [
       <FlatButton
-        label="Cancel"
+        label='Cancel'
         secondary
         onTouchTap={this.handleClose}
       />,
       <FlatButton
-        label="Submit"
+        label='Submit'
         primary
         onTouchTap={this.handleSubmit}
       />
@@ -345,7 +345,7 @@ export class HomeView extends React.Component {
                 maxHeight={300}
                 value={selectTime}
                 onChange={this.handleSelectTime}
-                floatingLabelText="Select time range"
+                floatingLabelText='Select time range'
               >
                 {times}
               </SelectField>
@@ -363,7 +363,7 @@ export class HomeView extends React.Component {
               <img src={loadingGif} />
             </div>
             <h2>{uploadProgress} %</h2>
-            <LinearProgress mode="determinate" color='#00BCD4' value={uploadProgress} />
+            <LinearProgress mode='determinate' color='#00BCD4' value={uploadProgress} />
           </div>
         </Dialog>
       </div>
