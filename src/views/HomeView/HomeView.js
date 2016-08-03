@@ -172,7 +172,8 @@ export class HomeView extends React.Component {
       simTimes: {
         min: 0,
         max: tMax
-      }
+      },
+      selectTime: 0
     });
   }
 
