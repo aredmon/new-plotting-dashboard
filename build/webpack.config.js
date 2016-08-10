@@ -20,7 +20,11 @@ const webpackConfig = {
     root: paths.base(config.dir_client),
     extensions: ['', '.js', '.jsx']
   },
-  module: {}
+  module: {
+    noParse: [
+      /plotly\.js/
+    ]
+  }
 };
 // ------------------------------------
 // Entry Points
