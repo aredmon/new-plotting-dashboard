@@ -19,7 +19,7 @@ export class HomeView extends React.Component {
   constructor () {
     super();
     this.simData = [];
-    this.scenarioTimeIncrement = 200;
+    this.scenarioTimeIncrement = 6000;
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleSubmit= this.handleSubmit.bind(this);
@@ -58,7 +58,7 @@ export class HomeView extends React.Component {
     const file = files[0];
     this.file = {
       fileRef: file,
-      chunkSize: 1024 * 100 * 5
+      chunkSize: 1024 * 1000 * 5
     };
 
     // show the selector dialog

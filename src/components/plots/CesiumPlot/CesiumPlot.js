@@ -189,12 +189,12 @@ class CesiumPlot extends React.Component {
        * Create an array of rectangular sensors
        */
       const addRectangularSensorArray =() => {
-        const sectorIncrements = cesium.Math.toRadians(45);
+        const sectorIncrements = cesium.Math.toRadians(60);
         const startingAngle = cone;
         let count = 0;
         const airSensorArray = new cesium.PrimitiveCollection();
         const ramSensorArray = new cesium.PrimitiveCollection();
-        for (var i = startingAngle; i < halfSector*2; i+=sectorIncrements+halfSector) {
+        for (var i = startingAngle; i < halfSector*2+startingAngle; i+=sectorIncrements) {
           const airSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
             getSensorOptions(getModelMatrix(i), airRange, sectorIncrements, airCoverageColor));
           const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
