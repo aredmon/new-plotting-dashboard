@@ -164,8 +164,6 @@
     "redux-undo": "^1.0.0-beta4",
     "sass-loader": "^3.0.0",
     "script-loader": "^0.7.0",
-    "sinon": "^1.17.3",
-    "sinon-chai": "^2.8.0",
     "socket.io-client": "^1.4.5",
     "style-loader": "^0.13.0",
     "three": "^0.75.0",
