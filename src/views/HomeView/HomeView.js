@@ -13,18 +13,19 @@ import Checkbox from 'material-ui/lib/checkbox';
 import SelectField from 'material-ui/lib/SelectField';
 import MenuItem from 'material-ui/lib/menus/menu-item';
 import LinearProgress from 'material-ui/lib/linear-progress';
+import TextField from 'material-ui/lib/text-field';
 
 export class HomeView extends React.Component {
 
   constructor () {
     super();
     this.simData = [];
-    this.scenarioTimeIncrement = 3600;
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleSubmit= this.handleSubmit.bind(this);
     this.handleSelectTime = this.handleSelectTime.bind(this);
     this.handleRadarCheckbox= this.handleRadarCheckbox.bind(this);
+    this.handleTimeIncrementChange= this.handleTimeIncrementChange.bind(this);
     this.loadSimData = this.loadSimData.bind(this);
     this.loadMaxTime = this.loadMaxTime.bind(this);
     this.loadRadars = this.loadRadars.bind(this);
@@ -39,7 +40,8 @@ export class HomeView extends React.Component {
         max: 0
       },
       filteredRadars: [],
-      fileName: null
+      fileName: null,
+      scenarioTimeIncrement: 200
     };
   }
 
@@ -79,9 +81,9 @@ export class HomeView extends React.Component {
    * @param  {Number} progress The progress of the file reading
    */
   loadSimData (data, progress, finished) {
-    const { filteredRadars, selectTime } = this.state;
+    const { filteredRadars, selectTime, scenarioTimeIncrement } = this.state;
     const tMin = selectTime;
-    const tMax = tMin+this.scenarioTimeIncrement;
+    const tMax = tMin+scenarioTimeIncrement;
     // process data
     _(data).forEach((row) => {
       // check if the time is within the filtered time range
@@ -208,7 +210,8 @@ export class HomeView extends React.Component {
    * @param  {[type]} value [description]
    */
   handleSelectTime (event, index, value) {
-    console.debug(`${value} - ${value+this.scenarioTimeIncrement}`);
+    const { scenarioTimeIncrement } = this.state;
+    console.debug(`${value} - ${value+scenarioTimeIncrement}`);
     this.setState({
       selectTime: value
     });
@@ -237,6 +240,12 @@ export class HomeView extends React.Component {
       filteredRadars: filteredRadars
     });
   }
+
+  handleTimeIncrementChange (event) {
+    this.setState({
+      scenarioTimeIncrement: event.target.value
+    });
+  }
   /**
    * Creates the drop zone element
    */
@@ -247,7 +256,8 @@ export class HomeView extends React.Component {
       simTimes,
       selectTime,
       dialogLoading,
-      uploadProgress } = this.state;
+      uploadProgress,
+      scenarioTimeIncrement } = this.state;
 
     /**
      * The styles for the drop zone
@@ -302,8 +312,8 @@ export class HomeView extends React.Component {
     ];
 
     const times = [];
-    for (let i = 0; i < simTimes.max; i+=this.scenarioTimeIncrement) {
-      times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+this.scenarioTimeIncrement}`}/>);
+    for (let i = 0; i < simTimes.max; i+=scenarioTimeIncrement) {
+      times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+scenarioTimeIncrement}`}/>);
     }
 
     return (
@@ -345,11 +355,17 @@ export class HomeView extends React.Component {
               <SelectField
                 maxHeight={300}
                 value={selectTime}
-                onChange={this.handleSelectTime}
+                onBlur={this.handleSelectTime}
                 floatingLabelText='Select time range'
               >
                 {times}
               </SelectField>
+              <TextField
+                value={scenarioTimeIncrement}
+                onChange={this.handleTimeIncrementChange}
+                type='Number'
+                floatingLabelText='Select time increment'
+            />
             </div>
           </div>
         </Dialog>
