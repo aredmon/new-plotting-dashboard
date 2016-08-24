@@ -12,7 +12,10 @@ import FlatButton from 'material-ui/lib/flat-button';
 import Checkbox from 'material-ui/lib/checkbox';
 import SelectField from 'material-ui/lib/SelectField';
 import MenuItem from 'material-ui/lib/menus/menu-item';
+import RadioButton from 'material-ui/lib/radio-button';
+import RadioButtonGroup from 'material-ui/lib/radio-button-group';
 import LinearProgress from 'material-ui/lib/linear-progress';
+import TruthVsTrack from 'components/plots/TruthVsTrack';
 
 export class HomeView extends React.Component {
 
@@ -31,6 +34,7 @@ export class HomeView extends React.Component {
     this.uploadComplete = this.uploadComplete.bind(this);
     this.state = {
       uploadProgress: 0,
+      radarSelectionDialog: true,
       dialogOpen: false,
       dialogLoading: false,
       simRadars: null,
@@ -60,6 +64,12 @@ export class HomeView extends React.Component {
       fileRef: file,
       chunkSize: 1024 * 1000 * 5
     };
+
+    /*
+    if (zackattacks file)
+      read file data into variable
+      call this.setState({ delimitedData: variable})
+    */
 
     // show the selector dialog
     this.setState({
@@ -181,10 +191,17 @@ export class HomeView extends React.Component {
    * Dialog submit handler
    */
   handleSubmit () {
-    this.setState({
-      dialogOpen: false,
-      dialogLoading: true
-    });
+    const {radarSelectionDialog} = this.state;
+    if (radarSelectionDialog) {
+      this.setState({
+        radarSelectionDialog: false
+      });
+    } else {
+      this.setState({
+        dialogOpen: false,
+        dialogLoading: true
+      });
+    }
 
     // Read the first chunk to get the radar data
     const fileReader = new FileSliceReader(this.file.fileRef, this.file.chunkSize, '\n');
@@ -247,7 +264,9 @@ export class HomeView extends React.Component {
       simTimes,
       selectTime,
       dialogLoading,
-      uploadProgress } = this.state;
+      uploadProgress,
+      radarSelectionDialog,
+      delimitedData } = this.state;
 
     /**
      * The styles for the drop zone
@@ -300,11 +319,24 @@ export class HomeView extends React.Component {
         onTouchTap={this.handleSubmit}
       />
     ];
-
     const times = [];
     for (let i = 0; i < simTimes.max; i+=this.scenarioTimeIncrement) {
       times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+this.scenarioTimeIncrement}`}/>);
     }
+
+    const view = delimitedData
+    ? <Dropzone onDrop={this.onDrop} style={styles.dropzoneStyle}>
+      <div id={'dropContent'} style={{ textAlign: 'center' }}>
+        <h3>Drag and drop log file here</h3>
+        <h5>Or click to browse for log file</h5>
+      </div>
+    </Dropzone>
+    : <TruthVsTrack
+      data={delimitedData}
+      title={'Sup dawg'}
+      fieldX='t_valid'
+      fieldY='alt'
+      altSeries1='terrain' />;
 
     return (
       <div
@@ -314,12 +346,28 @@ export class HomeView extends React.Component {
           height: 'calc(100vh - 88px)'
         }}
       >
-        <Dropzone onDrop={this.onDrop} style={styles.dropzoneStyle}>
-          <div id={'dropContent'} style={{ textAlign: 'center' }}>
-            <h3>Drag and drop log file here</h3>
-            <h5>Or click to browse for log file</h5>
+        {view}
+        <Dialog
+          title={'Select Logging Type'}
+          actions={actions}
+          modal
+          open={radarSelectionDialog}
+        >
+          <div>
+            <RadioButtonGroup name='radarTypes' defaultSelected='json'>
+              <RadioButton
+                value='csv'
+                label='CSV'
+                style={styles.radioButton}
+              />
+              <RadioButton
+                value='json'
+                label='JSON'
+                style={styles.radioButton}
+              />
+            </RadioButtonGroup>
           </div>
-        </Dropzone>
+        </Dialog>
         <Dialog
           title={`File Name: ${fileName}`}
           actions={actions}
