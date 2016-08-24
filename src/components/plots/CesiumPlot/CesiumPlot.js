@@ -104,7 +104,7 @@ class CesiumPlot extends React.Component {
         modelId
       } = rdr.toJS();
       const airRange = radarRange;
-      const ramRange = radarRange/10;
+      const ramRange = 13000;
       const airCoverageColor = new cesium.Color(0.0, 1.0, 1.0, 0.3);
       const ramCoverageColor = new cesium.Color(1.0, 0.54, 0.0, 0.3);
       const halfAngleX = Math.abs((maxEl-minEl))/2;

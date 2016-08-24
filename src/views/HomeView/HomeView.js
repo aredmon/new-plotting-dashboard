@@ -246,6 +246,7 @@ export class HomeView extends React.Component {
    * @param  {Object} event   the TextField event
    */
   handleTimeIncrementChange (event) {
+    console.debug(event.target.value);
     if (event.target.value >= 1) {
       this.setState({
         scenarioTimeIncrement: Number(event.target.value)
