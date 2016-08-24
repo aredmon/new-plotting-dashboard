@@ -240,11 +240,17 @@ export class HomeView extends React.Component {
       filteredRadars: filteredRadars
     });
   }
-
+  /**
+   * Check event listener for the time interval. If the value is greater than 0,
+   * to avoid infinite time segments, update the value of scenarioTimeIncrement.
+   * @param  {Object} event   the TextField event
+   */
   handleTimeIncrementChange (event) {
-    this.setState({
-      scenarioTimeIncrement: event.target.value
-    });
+    if (event.target.value >= 1) {
+      this.setState({
+        scenarioTimeIncrement: Number(event.target.value)
+      });
+    }
   }
   /**
    * Creates the drop zone element
@@ -363,7 +369,7 @@ export class HomeView extends React.Component {
               <TextField
                 value={scenarioTimeIncrement}
                 onChange={this.handleTimeIncrementChange}
-                type='Number'
+                type='number'
                 floatingLabelText='Select time increment'
             />
             </div>
