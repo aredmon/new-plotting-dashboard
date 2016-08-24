@@ -19,7 +19,7 @@ export class HomeView extends React.Component {
   constructor () {
     super();
     this.simData = [];
-    this.scenarioTimeIncrement = 6000;
+    this.scenarioTimeIncrement = 3600;
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleSubmit= this.handleSubmit.bind(this);
