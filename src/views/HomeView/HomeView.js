@@ -19,19 +19,19 @@ import SelectField from 'material-ui/lib/SelectField';
 import MenuItem from 'material-ui/lib/menus/menu-item';
 import LinearProgress from 'material-ui/lib/linear-progress';
 import CircularProgress from 'material-ui/lib/circular-progress';
-// import TruthVsTrack from 'components/plots/TruthVsTrack';
+import TextField from 'material-ui/lib/text-field';
 
 export class HomeView extends React.Component {
 
   constructor () {
     super();
     this.simData = [];
-    this.scenarioTimeIncrement = 6000;
     this.onDrop = this.onDrop.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleSubmit= this.handleSubmit.bind(this);
     this.handleSelectTime = this.handleSelectTime.bind(this);
     this.handleRadarCheckbox= this.handleRadarCheckbox.bind(this);
+    this.handleTimeIncrementChange= this.handleTimeIncrementChange.bind(this);
     this.loadSimData = this.loadSimData.bind(this);
     this.loadMaxTime = this.loadMaxTime.bind(this);
     this.loadRadars = this.loadRadars.bind(this);
@@ -49,7 +49,8 @@ export class HomeView extends React.Component {
       },
       filteredRadars: [],
       fileName: null,
-      delimitedData: null
+      delimitedData: null,
+      scenarioTimeIncrement: 200
     };
   }
 
@@ -124,9 +125,9 @@ export class HomeView extends React.Component {
    * @param  {Number} progress The progress of the file reading
    */
   loadSimData (data, progress, finished) {
-    const { filteredRadars, selectTime } = this.state;
+    const { filteredRadars, selectTime, scenarioTimeIncrement } = this.state;
     const tMin = selectTime;
-    const tMax = tMin+this.scenarioTimeIncrement;
+    const tMax = tMin+scenarioTimeIncrement;
     // process data
     _(data).forEach((row) => {
       // check if the time is within the filtered time range
@@ -261,7 +262,8 @@ export class HomeView extends React.Component {
    * @param  {[type]} value [description]
    */
   handleSelectTime (event, index, value) {
-    console.debug(`${value} - ${value+this.scenarioTimeIncrement}`);
+    const { scenarioTimeIncrement } = this.state;
+    console.debug(`${value} - ${value+scenarioTimeIncrement}`);
     this.setState({
       selectTime: value
     });
@@ -291,6 +293,19 @@ export class HomeView extends React.Component {
     });
   }
   /**
+   * Check event listener for the time interval. If the value is greater than 0,
+   * to avoid infinite time segments, update the value of scenarioTimeIncrement.
+   * @param  {Object} event   the TextField event
+   */
+  handleTimeIncrementChange (event) {
+    console.debug(event.target.value);
+    if (event.target.value >= 1) {
+      this.setState({
+        scenarioTimeIncrement: Number(event.target.value)
+      });
+    }
+  }
+  /**
    * Creates the drop zone element
    */
   render () {
@@ -302,11 +317,11 @@ export class HomeView extends React.Component {
       dialogLoading,
       uploadProgress,
       delimitedData,
-      dialogParsingCSV
+      dialogParsingCSV,
+      scenarioTimeIncrement
        } = this.state;
 
     const { containerWidth, containerHeight } = this.props;
-    console.debug(containerWidth, containerHeight);
 
     /**
      * The styles for the drop zone
@@ -367,8 +382,8 @@ export class HomeView extends React.Component {
       />
     ];
     const times = [];
-    for (let i = 0; i < simTimes.max; i+=this.scenarioTimeIncrement) {
-      times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+this.scenarioTimeIncrement}`}/>);
+    for (let i = 0; i < simTimes.max; i+=scenarioTimeIncrement) {
+      times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+scenarioTimeIncrement}`}/>);
     }
 
     const syncingActions = [
@@ -426,11 +441,17 @@ export class HomeView extends React.Component {
               <SelectField
                 maxHeight={300}
                 value={selectTime}
-                onChange={this.handleSelectTime}
+                onBlur={this.handleSelectTime}
                 floatingLabelText='Select time range'
               >
                 {times}
               </SelectField>
+              <TextField
+                value={scenarioTimeIncrement}
+                onChange={this.handleTimeIncrementChange}
+                type='number'
+                floatingLabelText='Select time increment'
+            />
             </div>
           </div>
         </Dialog>

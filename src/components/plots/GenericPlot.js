@@ -15,17 +15,17 @@ import Colors from 'material-ui/lib/styles/colors';
  */
 class TruthVsTrack extends React.Component {
 
-  constructor () {
-    super();
+  constructor (props) {
+    super(props);
     this.handleEditChart = this.handleEditChart.bind(this);
     this.handleUpdateChart = this.handleUpdateChart.bind(this);
     this.handleSelectSeries = this.handleSelectSeries.bind(this);
     this.handleSelectXAxis = this.handleSelectXAxis.bind(this);
     this.handleSelectYAxis = this.handleSelectYAxis.bind(this);
     this.state = {
-      fieldY: 'RUV.V_Beam',
-      fieldX: 'TimeActivity',
-      series: 'Indentifier',
+      fieldY: props.data[0][0],
+      fieldX: props.data[0][1],
+      series: props.data[0][2],
       showEditChart: false,
       renderingPlot: false
     };
