@@ -6,16 +6,20 @@ import { addData } from '../../redux/modules/log-data';
 import FileSliceReader from './FileSliceReader';
 import _ from 'lodash';
 import loadingGif from './ajax-loader.gif';
+import Baby from 'babyparse';
+import Dimensions from 'react-dimensions';
+// plots
+import GenericPlot from 'components/plots/GenericPlot';
 // material ui
 import Dialog from 'material-ui/lib/dialog';
+import Colors from 'material-ui/lib/styles/colors';
 import FlatButton from 'material-ui/lib/flat-button';
 import Checkbox from 'material-ui/lib/checkbox';
 import SelectField from 'material-ui/lib/SelectField';
 import MenuItem from 'material-ui/lib/menus/menu-item';
-import RadioButton from 'material-ui/lib/radio-button';
-import RadioButtonGroup from 'material-ui/lib/radio-button-group';
 import LinearProgress from 'material-ui/lib/linear-progress';
-import TruthVsTrack from 'components/plots/TruthVsTrack';
+import CircularProgress from 'material-ui/lib/circular-progress';
+// import TruthVsTrack from 'components/plots/TruthVsTrack';
 
 export class HomeView extends React.Component {
 
@@ -37,23 +41,32 @@ export class HomeView extends React.Component {
       radarSelectionDialog: true,
       dialogOpen: false,
       dialogLoading: false,
+      dialogParsingCSV: false,
       simRadars: null,
       simTimes: {
         min: 0,
         max: 0
       },
       filteredRadars: [],
-      fileName: null
+      fileName: null,
+      delimitedData: null
     };
   }
 
   static propTypes = {
-    addData: PropTypes.func
+    addData: PropTypes.func,
+    containerHeight: PropTypes.number,
+    containerWidth: PropTypes.number
   }
 
   static contextTypes = {
     router: React.PropTypes.object
   };
+
+  componentDidMount () {
+    window.dispatchEvent(new Event('resize'));
+  }
+
   /**
    * Receives the dropped file(s) from the drop zone.
    * @param  {[file]} files The file uploaded by the user
@@ -62,25 +75,47 @@ export class HomeView extends React.Component {
     const file = files[0];
     this.file = {
       fileRef: file,
-      chunkSize: 1024 * 1000 * 5
+      chunkSize: 1024 * 1000 * 5,
+      name: file.name
     };
 
-    /*
-    if (zackattacks file)
-      read file data into variable
-      call this.setState({ delimitedData: variable})
-    */
+    const extension = file.name.substr(file.name.lastIndexOf('.')+1);
 
-    // show the selector dialog
-    this.setState({
-      dialogOpen: true,
-      uploadProgress: 0,
-      fileName: file.name
-    });
+    if (extension === 'txt') {
+      console.debug('txt file detected');
+      const fr = new FileReader();
 
-    // Read the first chunk to get the radar data
-    const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
-    firstSliceReader.readFirstChunk(this.loadRadars);
+      fr.onload = e => {
+        const text = fr.result;
+        const parsed = Baby.parse(text, { // eslint-disable-line
+          delimiter: ' '
+        });
+        const rows = parsed.data;
+        console.debug(`Parsed ${rows.length} rows`);
+        console.debug(`Headers: ${rows[0]}`);
+        this.setState({
+          dialogParsingCSV: false,
+          delimitedData: rows
+        });
+      };
+
+      this.setState({
+        dialogParsingCSV: true
+      });
+
+      fr.readAsText(file);
+    } else {
+      // show the selector dialog
+      this.setState({
+        dialogOpen: true,
+        uploadProgress: 0,
+        fileName: file.name
+      });
+
+      // Read the first chunk to get the radar data
+      const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
+      firstSliceReader.readFirstChunk(this.loadRadars);
+    }
   }
 
   /**
@@ -214,7 +249,8 @@ export class HomeView extends React.Component {
   handleClose () {
     this.setState({
       dialogOpen: false,
-      dialogLoading: false
+      dialogLoading: false,
+      dialogParsingCSV: false
     });
   }
 
@@ -265,8 +301,12 @@ export class HomeView extends React.Component {
       selectTime,
       dialogLoading,
       uploadProgress,
-      radarSelectionDialog,
-      delimitedData } = this.state;
+      delimitedData,
+      dialogParsingCSV
+       } = this.state;
+
+    const { containerWidth, containerHeight } = this.props;
+    console.debug(containerWidth, containerHeight);
 
     /**
      * The styles for the drop zone
@@ -291,6 +331,13 @@ export class HomeView extends React.Component {
         width: '100%',
         backgroundColor: '#fff',
         padding: '20px',
+        display: 'flex',
+        flexDirection: 'row'
+      },
+      plotDiv: {
+        height: '100%',
+        width: '100%',
+        backgroundColor: '#fff',
         display: 'flex',
         flexDirection: 'row'
       },
@@ -324,19 +371,26 @@ export class HomeView extends React.Component {
       times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+this.scenarioTimeIncrement}`}/>);
     }
 
-    const view = delimitedData
+    const syncingActions = [
+      <FlatButton
+        label='Cancel'
+        style={{color: Colors.grey500, fontWeight: 'bold'}}
+        onTouchTap={this.handleClose}
+      />
+    ];
+
+    const view = !delimitedData
     ? <Dropzone onDrop={this.onDrop} style={styles.dropzoneStyle}>
       <div id={'dropContent'} style={{ textAlign: 'center' }}>
         <h3>Drag and drop log file here</h3>
         <h5>Or click to browse for log file</h5>
       </div>
     </Dropzone>
-    : <TruthVsTrack
+    : <div style={styles.plotDiv}><GenericPlot
       data={delimitedData}
-      title={'Sup dawg'}
-      fieldX='t_valid'
-      fieldY='alt'
-      altSeries1='terrain' />;
+      width={containerWidth}
+      height={containerHeight}
+      title={this.file.name}/></div>;
 
     return (
       <div
@@ -347,27 +401,6 @@ export class HomeView extends React.Component {
         }}
       >
         {view}
-        <Dialog
-          title={'Select Logging Type'}
-          actions={actions}
-          modal
-          open={radarSelectionDialog}
-        >
-          <div>
-            <RadioButtonGroup name='radarTypes' defaultSelected='json'>
-              <RadioButton
-                value='csv'
-                label='CSV'
-                style={styles.radioButton}
-              />
-              <RadioButton
-                value='json'
-                label='JSON'
-                style={styles.radioButton}
-              />
-            </RadioButtonGroup>
-          </div>
-        </Dialog>
         <Dialog
           title={`File Name: ${fileName}`}
           actions={actions}
@@ -401,6 +434,20 @@ export class HomeView extends React.Component {
             </div>
           </div>
         </Dialog>
+
+        <Dialog
+          title={'Loading File'}
+          actions={syncingActions}
+          modal={false}
+          contentStyle={{maxWidth: '1200px'}}
+          open={dialogParsingCSV}
+          onRequestClose={this.handleClose}
+        >
+          <div style={{textAlign: 'center'}}>
+            <CircularProgress size={2} />
+          </div>
+        </Dialog>
+
         <Dialog
           title={'Loading Data'}
           modal={false}
@@ -429,4 +476,4 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   addData
 }, dispatch);
 
-export default connect(mapStateToProps, mapDispatchToProps)(HomeView);
+export default connect(mapStateToProps, mapDispatchToProps)(Dimensions()(HomeView));
