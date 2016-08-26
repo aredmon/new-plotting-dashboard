@@ -227,17 +227,10 @@ export class HomeView extends React.Component {
    * Dialog submit handler
    */
   handleSubmit () {
-    const {radarSelectionDialog} = this.state;
-    if (radarSelectionDialog) {
-      this.setState({
-        radarSelectionDialog: false
-      });
-    } else {
-      this.setState({
-        dialogOpen: false,
-        dialogLoading: true
-      });
-    }
+    this.setState({
+      dialogOpen: false,
+      dialogLoading: true
+    });
 
     // Read the first chunk to get the radar data
     const fileReader = new FileSliceReader(this.file.fileRef, this.file.chunkSize, '\n');
