@@ -6,13 +6,19 @@ import { addData } from '../../redux/modules/log-data';
 import FileSliceReader from './FileSliceReader';
 import _ from 'lodash';
 import loadingGif from './ajax-loader.gif';
+import Baby from 'babyparse';
+import Dimensions from 'react-dimensions';
+// plots
+import GenericPlot from 'components/plots/GenericPlot';
 // material ui
 import Dialog from 'material-ui/lib/dialog';
+import Colors from 'material-ui/lib/styles/colors';
 import FlatButton from 'material-ui/lib/flat-button';
 import Checkbox from 'material-ui/lib/checkbox';
 import SelectField from 'material-ui/lib/SelectField';
 import MenuItem from 'material-ui/lib/menus/menu-item';
 import LinearProgress from 'material-ui/lib/linear-progress';
+import CircularProgress from 'material-ui/lib/circular-progress';
 import TextField from 'material-ui/lib/text-field';
 
 export class HomeView extends React.Component {
@@ -32,8 +38,10 @@ export class HomeView extends React.Component {
     this.uploadComplete = this.uploadComplete.bind(this);
     this.state = {
       uploadProgress: 0,
+      radarSelectionDialog: true,
       dialogOpen: false,
       dialogLoading: false,
+      dialogParsingCSV: false,
       simRadars: null,
       simTimes: {
         min: 0,
@@ -41,17 +49,25 @@ export class HomeView extends React.Component {
       },
       filteredRadars: [],
       fileName: null,
+      delimitedData: null,
       scenarioTimeIncrement: 200
     };
   }
 
   static propTypes = {
-    addData: PropTypes.func
+    addData: PropTypes.func,
+    containerHeight: PropTypes.number,
+    containerWidth: PropTypes.number
   }
 
   static contextTypes = {
     router: React.PropTypes.object
   };
+
+  componentDidMount () {
+    window.dispatchEvent(new Event('resize'));
+  }
+
   /**
    * Receives the dropped file(s) from the drop zone.
    * @param  {[file]} files The file uploaded by the user
@@ -60,19 +76,47 @@ export class HomeView extends React.Component {
     const file = files[0];
     this.file = {
       fileRef: file,
-      chunkSize: 1024 * 1000 * 5
+      chunkSize: 1024 * 1000 * 5,
+      name: file.name
     };
 
-    // show the selector dialog
-    this.setState({
-      dialogOpen: true,
-      uploadProgress: 0,
-      fileName: file.name
-    });
+    const extension = file.name.substr(file.name.lastIndexOf('.')+1);
 
-    // Read the first chunk to get the radar data
-    const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
-    firstSliceReader.readFirstChunk(this.loadRadars);
+    if (extension === 'txt') {
+      console.debug('txt file detected');
+      const fr = new FileReader();
+
+      fr.onload = e => {
+        const text = fr.result;
+        const parsed = Baby.parse(text, { // eslint-disable-line
+          delimiter: ' '
+        });
+        const rows = parsed.data;
+        console.debug(`Parsed ${rows.length} rows`);
+        console.debug(`Headers: ${rows[0]}`);
+        this.setState({
+          dialogParsingCSV: false,
+          delimitedData: rows
+        });
+      };
+
+      this.setState({
+        dialogParsingCSV: true
+      });
+
+      fr.readAsText(file);
+    } else {
+      // show the selector dialog
+      this.setState({
+        dialogOpen: true,
+        uploadProgress: 0,
+        fileName: file.name
+      });
+
+      // Read the first chunk to get the radar data
+      const firstSliceReader = new FileSliceReader(file, this.file.chunkSize, '\n');
+      firstSliceReader.readFirstChunk(this.loadRadars);
+    }
   }
 
   /**
@@ -199,7 +243,8 @@ export class HomeView extends React.Component {
   handleClose () {
     this.setState({
       dialogOpen: false,
-      dialogLoading: false
+      dialogLoading: false,
+      dialogParsingCSV: false
     });
   }
 
@@ -246,6 +291,7 @@ export class HomeView extends React.Component {
    * @param  {Object} event   the TextField event
    */
   handleTimeIncrementChange (event) {
+    console.debug(event.target.value);
     if (event.target.value >= 1) {
       this.setState({
         scenarioTimeIncrement: Number(event.target.value)
@@ -263,7 +309,12 @@ export class HomeView extends React.Component {
       selectTime,
       dialogLoading,
       uploadProgress,
-      scenarioTimeIncrement } = this.state;
+      delimitedData,
+      dialogParsingCSV,
+      scenarioTimeIncrement
+       } = this.state;
+
+    const { containerWidth, containerHeight } = this.props;
 
     /**
      * The styles for the drop zone
@@ -288,6 +339,13 @@ export class HomeView extends React.Component {
         width: '100%',
         backgroundColor: '#fff',
         padding: '20px',
+        display: 'flex',
+        flexDirection: 'row'
+      },
+      plotDiv: {
+        height: '100%',
+        width: '100%',
+        backgroundColor: '#fff',
         display: 'flex',
         flexDirection: 'row'
       },
@@ -316,11 +374,31 @@ export class HomeView extends React.Component {
         onTouchTap={this.handleSubmit}
       />
     ];
-
     const times = [];
     for (let i = 0; i < simTimes.max; i+=scenarioTimeIncrement) {
       times.push(<MenuItem value={i} key={i} primaryText={`${i} - ${i+scenarioTimeIncrement}`}/>);
     }
+
+    const syncingActions = [
+      <FlatButton
+        label='Cancel'
+        style={{color: Colors.grey500, fontWeight: 'bold'}}
+        onTouchTap={this.handleClose}
+      />
+    ];
+
+    const view = !delimitedData
+    ? <Dropzone onDrop={this.onDrop} style={styles.dropzoneStyle}>
+      <div id={'dropContent'} style={{ textAlign: 'center' }}>
+        <h3>Drag and drop log file here</h3>
+        <h5>Or click to browse for log file</h5>
+      </div>
+    </Dropzone>
+    : <div style={styles.plotDiv}><GenericPlot
+      data={delimitedData}
+      width={containerWidth}
+      height={containerHeight}
+      title={this.file.name}/></div>;
 
     return (
       <div
@@ -330,12 +408,7 @@ export class HomeView extends React.Component {
           height: 'calc(100vh - 88px)'
         }}
       >
-        <Dropzone onDrop={this.onDrop} style={styles.dropzoneStyle}>
-          <div id={'dropContent'} style={{ textAlign: 'center' }}>
-            <h3>Drag and drop log file here</h3>
-            <h5>Or click to browse for log file</h5>
-          </div>
-        </Dropzone>
+        {view}
         <Dialog
           title={`File Name: ${fileName}`}
           actions={actions}
@@ -375,6 +448,20 @@ export class HomeView extends React.Component {
             </div>
           </div>
         </Dialog>
+
+        <Dialog
+          title={'Loading File'}
+          actions={syncingActions}
+          modal={false}
+          contentStyle={{maxWidth: '1200px'}}
+          open={dialogParsingCSV}
+          onRequestClose={this.handleClose}
+        >
+          <div style={{textAlign: 'center'}}>
+            <CircularProgress size={2} />
+          </div>
+        </Dialog>
+
         <Dialog
           title={'Loading Data'}
           modal={false}
@@ -403,4 +490,4 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   addData
 }, dispatch);
 
-export default connect(mapStateToProps, mapDispatchToProps)(HomeView);
+export default connect(mapStateToProps, mapDispatchToProps)(Dimensions()(HomeView));

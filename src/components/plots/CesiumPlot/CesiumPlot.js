@@ -91,7 +91,6 @@ class CesiumPlot extends React.Component {
     for (let rdr of this.props.radarData) {
       let { maxEl,
         minEl,
-        offsetEl,
         maxRange: radarRange,
         lat: radarLat,
         lon: radarLon,
@@ -104,7 +103,7 @@ class CesiumPlot extends React.Component {
         modelId
       } = rdr.toJS();
       const airRange = radarRange;
-      const ramRange = radarRange/10;
+      const ramRange = 13000;
       const airCoverageColor = new cesium.Color(0.0, 1.0, 1.0, 0.3);
       const ramCoverageColor = new cesium.Color(1.0, 0.54, 0.0, 0.3);
       const halfAngleX = Math.abs((maxEl-minEl))/2;
@@ -113,7 +112,7 @@ class CesiumPlot extends React.Component {
       var ellipsoid = viewer.scene.globe.ellipsoid;
       var clock = cesium.Math.toRadians(0.0);
       var cone = -(boreAzimuth - cesium.Math.toRadians(90));
-      var twist = -halfAngleX-offsetEl;
+      var twist = -halfAngleX;
       var location = ellipsoid.cartographicToCartesian(
         new cesium.Cartographic(
           radarLon,
@@ -189,7 +188,7 @@ class CesiumPlot extends React.Component {
        * Create an array of rectangular sensors
        */
       const addRectangularSensorArray =() => {
-        const sectorIncrements = cesium.Math.toRadians(60);
+        const sectorIncrements = cesium.Math.toRadians(90);
         const startingAngle = cone;
         let count = 0;
         const airSensorArray = new cesium.PrimitiveCollection();
@@ -199,6 +198,7 @@ class CesiumPlot extends React.Component {
             getSensorOptions(getModelMatrix(i), airRange, sectorIncrements, airCoverageColor));
           const ramSensor = new CesiumSensorVolumes.RectangularPyramidSensorVolume(
             getSensorOptions(getModelMatrix(i), ramRange, sectorIncrements, ramCoverageColor));
+          console.debug('adding array segment', i);
           this.airSensor.add(airSensor);
           this.ramSensor.add(ramSensor);
         }

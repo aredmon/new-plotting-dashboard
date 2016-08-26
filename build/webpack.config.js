@@ -24,6 +24,12 @@ const webpackConfig = {
     noParse: [
       /plotly\.js/
     ]
+  },
+  node: {
+    console: true,
+    fs: 'empty',
+    net: 'empty',
+    tls: 'empty'
   }
 };
 // ------------------------------------
