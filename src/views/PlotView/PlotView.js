@@ -79,8 +79,10 @@ export class PlotView extends React.Component {
     const radarData = data.filter((row) => {
       return row.get('type') === 'radarInit';
     });
-
-    const radarName = radarData.first().get('radarName');
+    let radarName = '';
+    if (radars.size > 0) {
+      radarName = radarData.first().get('radarName');
+    }
 
     // control which plot to display
     switch (params.plotType) {

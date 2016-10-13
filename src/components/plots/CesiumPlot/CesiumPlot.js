@@ -297,7 +297,7 @@ class CesiumPlot extends React.Component {
 
       // convert to proper coordinate
       let coordinate = viewer.scene.globe.ellipsoid.cartographicToCartesian(
-        new cesium.Cartographic(
+        new cesium.Cartographic.fromDegrees( // eslint-disable-line
           lon,
           lat,
           alt

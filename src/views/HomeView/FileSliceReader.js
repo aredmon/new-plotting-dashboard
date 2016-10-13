@@ -84,7 +84,7 @@ class FileSliceReader {
     }
     let jsonString = this.readReverse
       ? `[${dataChunk.substring(lastCharIndex).replace(/[,]\s+$/g, '')}]`
-      : `[${dataChunk.substring(0, lastCharIndex).replace(/[,]+$/g, '')}]`;
+      : `[${dataChunk.substring(0, lastCharIndex).replace(/[,]\s+$/g, '')}]`;
 
     let dataObject = JSON.parse(jsonString);
 

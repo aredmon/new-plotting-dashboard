@@ -76,7 +76,7 @@ export class HomeView extends React.Component {
     const file = files[0];
     this.file = {
       fileRef: file,
-      chunkSize: 1024 * 1000 * 5,
+      chunkSize: 1024 * 1000 * 0.5,
       name: file.name
     };
 
@@ -138,16 +138,23 @@ export class HomeView extends React.Component {
         this.simData.push(row);
       }
 
-      // Get truth onjects for the first radar. no need to get truth for every radar
-      if (tValid && type === 'truth' &&
-          _.get(row, 'radar_id') === filteredRadars[0]) {
-        this.simData.push(row);
-      }
-
-      // Get track objects for the selected radars
-      if (tValid && type === 'track' &&
-        filteredRadars.indexOf(_.get(row, 'radar_id')) >= 0) {
-        this.simData.push(row);
+      // only perform radar filtering if radars are selected
+      if (filteredRadars.length > 0) {
+        // Get truth onjects for the first radar. no need to get truth for every radar
+        if (tValid && type === 'truth' &&
+            _.get(row, 'radar_id') === filteredRadars[0]) {
+          this.simData.push(row);
+        }
+        // Get track objects for the selected radars
+        if (tValid && type === 'track' &&
+          filteredRadars.indexOf(_.get(row, 'radar_id')) >= 0) {
+          this.simData.push(row);
+        }
+      } else {
+        // add all truth and track data
+        if (tValid && (type === 'truth' || type === 'track')) {
+          this.simData.push(row);
+        }
       }
     });
 
