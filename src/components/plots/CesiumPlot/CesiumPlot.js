@@ -91,7 +91,6 @@ class CesiumPlot extends React.Component {
     for (let rdr of this.props.radarData) {
       let { maxEl,
         minEl,
-        offsetEl,
         maxRange: radarRange,
         lat: radarLat,
         lon: radarLon,
@@ -113,7 +112,7 @@ class CesiumPlot extends React.Component {
       var ellipsoid = viewer.scene.globe.ellipsoid;
       var clock = cesium.Math.toRadians(0.0);
       var cone = -(boreAzimuth - cesium.Math.toRadians(90));
-      var twist = -halfAngleX-offsetEl;
+      var twist = -halfAngleX;
       var location = ellipsoid.cartographicToCartesian(
         new cesium.Cartographic(
           radarLon,

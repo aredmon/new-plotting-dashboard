@@ -441,7 +441,7 @@ export class HomeView extends React.Component {
               <SelectField
                 maxHeight={300}
                 value={selectTime}
-                onBlur={this.handleSelectTime}
+                onChange={this.handleSelectTime}
                 floatingLabelText='Select time range'
               >
                 {times}
