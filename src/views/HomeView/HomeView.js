@@ -459,10 +459,9 @@ export class HomeView extends React.Component {
         <Dialog
           title={'Loading File'}
           actions={syncingActions}
-          modal={false}
+          modal
           contentStyle={{maxWidth: '1200px'}}
           open={dialogParsingCSV}
-          onRequestClose={this.handleClose}
         >
           <div style={{textAlign: 'center'}}>
             <CircularProgress size={2} />
@@ -471,9 +470,8 @@ export class HomeView extends React.Component {
 
         <Dialog
           title={'Loading Data'}
-          modal={false}
+          modal
           open={dialogLoading}
-          onRequestClose={this.handleClose}
         >
           <div style={{textAlign: 'center'}}>
             <div style={{float: 'right', marginTop: '-30px'}}>
