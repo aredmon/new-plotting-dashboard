@@ -37,8 +37,8 @@ class AppLeftNav extends React.Component {
   }
 
   handleTouchTapHeader () {
-    window.location = '/';
-    this.props.history.push('/');
+    window.location = '/home';
+    this.props.history.push('/home');
     this.setState({
       leftNavOpen: false
     });
@@ -120,10 +120,10 @@ class AppLeftNav extends React.Component {
   }
 }
 
-const mapDispatchToProps = (state) => {
+const mapStateToProps = (state) => {
   return {
     data: state.data
   };
 };
 
-export default connect(mapDispatchToProps)(AppLeftNav);
+export default connect(mapStateToProps)(AppLeftNav);

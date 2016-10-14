@@ -15,6 +15,7 @@ import SummaryView from 'views/SummaryView/SummaryView';
 export default (store) => (
   <Route path='/' component={CoreLayout}>
     <IndexRoute component={HomeView} />
+    <Route path='/home' component={HomeView} />
     <Route path='/404' component={NotFoundView} />
     <Route path='/plot/:plotType' component={PlotView} />
     <Route path='/summary' component={SummaryView} />

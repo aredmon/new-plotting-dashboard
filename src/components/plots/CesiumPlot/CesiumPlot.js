@@ -3,7 +3,7 @@ import React, { PropTypes } from 'react';
 // varables are not used
 import 'cesium/Widgets/widgets.css';
 import 'cesium/Cesium.js';
-import { createOutline, testOutline } from './hemisphere';
+// import { createOutline, testOutline } from './hemisphere';
 
 class CesiumPlot extends React.Component {
   // data should be an array of track and truth data
@@ -69,9 +69,9 @@ class CesiumPlot extends React.Component {
   }
 
   drawShapes = () => {
-    const { cesium, viewer } = this;
-    const outline = createOutline(testOutline, cesium);
-    viewer.scene.primitives.add(outline);
+    // const { cesium, viewer } = this;
+    // const outline = createOutline(testOutline, cesium);
+    // viewer.scene.primitives.add(outline);
     return;
   }
 
@@ -395,6 +395,17 @@ class CesiumPlot extends React.Component {
       }
     };
 
+    // <button
+    //   className={'cesium-button'}
+    //   onClick={this.toggleRamSensors}>
+    //     RAM Sensors
+    // </button>
+    //
+    // <button
+    //   className={'cesium-button'}
+    //   onClick={this.toggleAirSensors}>
+    //     Air Sensors
+    // </button>
     return (
       <div style={styles.parent}>
         <div id={'cesiumContainer'} style={styles.cesiumContainer}>
@@ -411,11 +422,6 @@ class CesiumPlot extends React.Component {
             </button>
             <button
               className={'cesium-button'}
-              onClick={this.toggleRamSensors}>
-                RAM Sensors
-            </button>
-            <button
-              className={'cesium-button'}
               onClick={this.toggleAirTracks}>
                 Air Tracks
             </button>
@@ -423,11 +429,6 @@ class CesiumPlot extends React.Component {
               className={'cesium-button'}
               onClick={this.toggleAirTruths}>
                 Air Truths
-            </button>
-            <button
-              className={'cesium-button'}
-              onClick={this.toggleAirSensors}>
-                Air Sensors
             </button>
           </div>
         </div>
