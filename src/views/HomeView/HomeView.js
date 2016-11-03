@@ -133,8 +133,9 @@ export class HomeView extends React.Component {
       // check if the time is within the filtered time range
       const tValid = _.get(row, 't_valid') >= tMin && _.get(row, 't_valid') <= tMax;
       const type = _.get(row, 'type');
+
       // Get radar init objects for the selected radars
-      if (type === 'radarInit' && filteredRadars.indexOf(_.get(row, 'modelId')) >= 0) {
+      if (type === 'antenna' && filteredRadars.indexOf(_.get(row, 'radar_id')) >= 0) {
         this.simData.push(row);
       }
 
@@ -195,7 +196,7 @@ export class HomeView extends React.Component {
     let radars = [];
 
     _(data).forEach((row) => {
-      if (_.get(row, 'type') === 'radarInit') {
+      if (_.get(row, 'type') === 'antenna') {
         radars.push(row);
       }
     });
@@ -426,14 +427,13 @@ export class HomeView extends React.Component {
             <div style={styles.block}>
               <h3>Radars</h3>
                 {_.map(simRadars, (row) => {
-                  const { modelId, radarName } = row;
-                  const label = `Radar ${modelId}: ${radarName}`;
+                  const { radar_id: radarId } = row;
+                  const label = `Radar ${radarId}`;
                   return <Checkbox
                     label={label}
                     style={styles.checkbox}
-                    key={modelId}
-                    value={`${modelId}`}
-                    name={radarName}
+                    value={`${radarId}`}
+                    name={radarId}
                     onCheck={this.handleRadarCheckbox}/>;
                 })}
             </div>

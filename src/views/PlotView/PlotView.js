@@ -77,10 +77,12 @@ export class PlotView extends React.Component {
     });
 
     const radarData = data.filter((row) => {
-      return row.get('type') === 'radarInit';
+      return row.get('type') === 'antenna';
     });
+    console.debug('plotview');
+    console.debug(radarData.toJS());
     let radarName = '';
-    if (radars.size > 0) {
+    if (radarData.size > 0) {
       radarName = radarData.first().get('radarName');
     }
 

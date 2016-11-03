@@ -3,7 +3,7 @@ import React, { PropTypes } from 'react';
 // varables are not used
 import 'cesium/Widgets/widgets.css';
 import 'cesium/Cesium.js';
-// import { createOutline, testOutline } from './hemisphere';
+import { createVolume } from './hemisphere';
 
 class CesiumPlot extends React.Component {
   // data should be an array of track and truth data
@@ -69,9 +69,15 @@ class CesiumPlot extends React.Component {
   }
 
   drawShapes = () => {
-    // const { cesium, viewer } = this;
-    // const outline = createOutline(testOutline, cesium);
-    // viewer.scene.primitives.add(outline);
+    const { cesium, viewer } = this;
+    const { radarData } = this.props;
+    this.sensors = new cesium.PrimitiveCollection();
+    radarData.forEach(radar => {
+      const antenna = createVolume(radar.toJS(), cesium);
+      this.sensors.add(antenna);
+      // viewer.scene.primitives.add(antenna);
+    });
+    viewer.scene.primitives.add(this.sensors);
     return;
   }
 
@@ -97,7 +103,7 @@ class CesiumPlot extends React.Component {
 
       // convert to proper coordinate
       let coordinate = viewer.scene.globe.ellipsoid.cartographicToCartesian(
-        new cesium.Cartographic.fromDegrees( // eslint-disable-line
+        new cesium.Cartographic.fromRadians( // eslint-disable-line
           lon,
           lat,
           alt
@@ -164,6 +170,7 @@ class CesiumPlot extends React.Component {
     // Ram Tracks
     const ramTracks = viewer.entities.add(new cesium.Entity({id: 'ramTracks'}));
     for (var ramTrackId in ramTrackMap) {
+      console.debug(`ram track id ${ramTrackId} - ${ramTrackMap[ramTrackId].length} points`);
       viewer.entities.add(
         {
           name: `Track ${ramTrackId}`,
@@ -180,6 +187,7 @@ class CesiumPlot extends React.Component {
     // Ram Truths
     const ramTruths = viewer.entities.add(new cesium.Entity({id: 'ramTruths'}));
     for (var ramTruthId in ramTruthMap) {
+      console.debug(`ram truth id ${ramTruthId} - ${ramTruthMap[ramTruthId].length} points`);
       viewer.entities.add(
         {
           name: `Truth ${ramTruthId}`,
@@ -196,6 +204,7 @@ class CesiumPlot extends React.Component {
     // Air Tracks
     const airTracks = viewer.entities.add(new cesium.Entity({id: 'airTracks'}));
     for (var airTrackId in airTrackMap) {
+      console.debug(`air track id ${airTrackId} - ${airTrackMap[airTrackId].length} points`);
       viewer.entities.add(
         {
           name: `Track ${airTrackId}`,
@@ -212,6 +221,7 @@ class CesiumPlot extends React.Component {
     // Air Truths
     const airTruths = viewer.entities.add(new cesium.Entity({id: 'airTruths'}));
     for (var airTruthId in airTruthMap) {
+      console.debug(`air truth id ${airTruthId} - ${airTruthMap[airTruthId].length} points`);
       viewer.entities.add(
         {
           name: `Truth ${airTruthId}`,
@@ -351,9 +361,8 @@ class CesiumPlot extends React.Component {
   /**
    * Click handler to toggle air sensors
    */
-  toggleRamSensors = () => {
-    this.ramSensor.show = !this.ramSensor.show;
-    this.sphericalRamSensors.show = !this.sphericalRamSensors.show;
+  toggleSensorVolumes = () => {
+    this.sensors.show = !this.sensors.show;
   }
 
   /**
@@ -429,6 +438,11 @@ class CesiumPlot extends React.Component {
               className={'cesium-button'}
               onClick={this.toggleAirTruths}>
                 Air Truths
+            </button>
+            <button
+              className={'cesium-button'}
+              onClick={this.toggleSensorVolumes}>
+                Sensor Volumes
             </button>
           </div>
         </div>

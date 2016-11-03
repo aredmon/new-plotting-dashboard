@@ -16,8 +16,8 @@ const getSummaryMetrics = (data) => {
     ids = ids.add(row.get('id'));
 
     // get radar inits
-    if (row.get('type') === 'radarInit') {
-      radars = radars.add(row.get('radarId'));
+    if (row.get('type') === 'antenna') {
+      radars = radars.add(row.get('radar_id'));
     }
     types = types.add(row.get('type'));
 
