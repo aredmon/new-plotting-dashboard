@@ -16,7 +16,7 @@ class FileSliceReader {
       objectCount: 0,
       progress: 0,
       chunksRead: 0,
-      delimiter: delimiter || '\n'
+      delimiter: delimiter || '\r'
     };
   }
 
@@ -83,8 +83,8 @@ class FileSliceReader {
       return;
     }
     let jsonString = this.readReverse
-      ? `[${dataChunk.substring(lastCharIndex).replace(/[,]\s+$/g, '')}]`
-      : `[${dataChunk.substring(0, lastCharIndex).replace(/[,]\s+$/g, '')}]`;
+      ? `[${dataChunk.substring(lastCharIndex).replace(/[,\s]+$/g, '')}]`
+      : `[${dataChunk.substring(0, lastCharIndex).replace(/[,\s]+$/g, '')}]`;
 
     let dataObject = JSON.parse(jsonString);
 

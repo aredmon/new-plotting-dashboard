@@ -76,7 +76,8 @@ export class HomeView extends React.Component {
     const file = files[0];
     this.file = {
       fileRef: file,
-      chunkSize: 1024 * 1000 * 0.5,
+      // chunkSize: 1024 * 1000 * 0.1,
+      chunkSize: 1024 * 20,
       name: file.name
     };
 
@@ -433,7 +434,8 @@ export class HomeView extends React.Component {
                     label={label}
                     style={styles.checkbox}
                     value={`${radarId}`}
-                    name={radarId}
+                    name={`${radarId}`}
+                    key={radarId}
                     onCheck={this.handleRadarCheckbox}/>;
                 })}
             </div>
