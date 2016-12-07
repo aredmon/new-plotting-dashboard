@@ -8,25 +8,30 @@ class SummaryWidget extends Component {
 
   static propTypes = {
     title: PropTypes.string,
-    values: PropTypes.array,
+    subtitle: PropTypes.string,
+    chartTitle: PropTypes.string,
+    values: PropTypes.object,
     labels: PropTypes.array
   }
 
   render () {
-    const { title, values, labels } = this.props;
+    const { title, subtitle, values, labels, chartTitle } = this.props;
     return (
-      <Card>
-        <CardHeader
-          title='Threat Summary'
-          subtitle={title}
-        />
-        <CardMedia>
-          <ThreatChart
-            values={values}
-            labels={labels}
-            />
-        </CardMedia>
-      </Card>
+      <div style={{marginRight: '15px'}} >
+        <Card>
+          <CardHeader
+            title={title}
+            subtitle={subtitle}
+          />
+          <CardMedia style={{marginTop: '15px'}}>
+            <ThreatChart
+              chartTitle={chartTitle}
+              values={values}
+              labels={labels}
+              />
+          </CardMedia>
+        </Card>
+      </div>
     );
   }
 }

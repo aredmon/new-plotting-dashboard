@@ -9,13 +9,11 @@ class ThreatChart extends React.Component {
     this.state={};
   }
 
-  // data should be an array of track and truth data
-  // filtered by a track id
   static propTypes = {
-    data: PropTypes.object,
-    values: PropTypes.array,
+    values: PropTypes.object,
     labels: PropTypes.array,
-    title: PropTypes.string
+    title: PropTypes.string,
+    chartTitle: PropTypes.string
   }
 
   componentDidMount () {
@@ -23,34 +21,42 @@ class ThreatChart extends React.Component {
     this.setState({
       plotDiv
     });
-    Plotly.newPlot(plotDiv, this.createPlotData(this.props.data), this.createLayout());
+    Plotly.newPlot(plotDiv, this.createPlotData(), this.createLayout());
   }
 
-  createPlotData (data) {
-    const { values, labels } = this.props;
+  createPlotData () {
+    const { values } = this.props;
+    console.debug(values.toJS());
+    const data = values.groupBy(val => val.get('objType'))
+      .reduce((group, val, key) => {
+        console.debug(key);
+        group[key] = val.size;
+        return group;
+      }, {});
+    console.debug(data);
     return [{
-      values,
-      labels,
+      values: Object.values(data),
+      labels: Object.keys(data),
       textinfo: 'label+value',
       annotations: {
         xanchor: 'center',
         color: '#ffff'
       },
       hoverinfo: 'label+value',
-      hole: 0.6,
+      hole: 0.3,
       type: 'pie',
       name: 'All Threats'
     }];
   }
 
   createLayout () {
-    const { title } = this.props;
+    const { chartTitle } = this.props;
     return {
-      title,
-      height: 350,
-      width: 350,
+      title: chartTitle,
+      height: 400,
+      width: 400,
       margin: {
-        t: 0,
+        t: 50,
         b: 0,
         l: 20,
         r: 5

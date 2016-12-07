@@ -9,7 +9,6 @@ export class SummaryView extends Component {
   constructor (props) {
     super();
     this.metrics = getMetrics(props.data);
-    this.saveMetrics = this.saveMetrics.bind(this);
   }
 
   static propTypes = {
@@ -21,26 +20,29 @@ export class SummaryView extends Component {
     this.saveMetrics();
   }
 
-  saveMetrics () {
+  saveMetrics = () => {
     const { addMetrics } = this.props;
     addMetrics(this.metrics);
   }
 
   render () {
-    const { trackIds, airThreats, ramThreats } = this.metrics;
+    const { airThreats, ramThreats, tracks } = this.metrics;
+    console.debug(tracks.toJS());
     const labels = ['Air Threats', 'RAM Threats'];
-    const values = [airThreats.size, ramThreats.size];
     return (
       <div style={{
         display: 'flex',
         flex: '1'
       }}>
         <SummaryWidget
-          title={`${trackIds.size} Threats`}
-          values={values}
+          title={'Threat Summary'}
+          subtitle={`${ramThreats.size} RAM Threats, ${airThreats.size} ABT Threats`}
+          chartTitle={'Track Classification'}
+          values={tracks}
           labels={labels}
           style={{
-            display: 'flex'
+            display: 'flex',
+            marginRight: '15px'
           }}
         />
       </div>
